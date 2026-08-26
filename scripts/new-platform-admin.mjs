@@ -184,7 +184,7 @@ if (Number(check.maktab_xodimi) > 0) {
 console.log('─'.repeat(56));
 console.log('  KIRISH MA\'LUMOTLARI');
 console.log('─'.repeat(56));
-console.log(`  Panel : https://admin.uztomic.uz`);
+console.log(`  Panel : https://maktabfinanceadmin.uztomic.uz`);
 console.log(`  Login : ${normalized}`);
 console.log(`  Parol : ${created ? password : '(o\'zgarmadi — mavjud hisob)'}`);
 console.log('─'.repeat(56));
