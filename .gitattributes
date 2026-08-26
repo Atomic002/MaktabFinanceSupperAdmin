@@ -1,0 +1,23 @@
+# =====================================================================
+#  Satr oxiri.
+#
+#  Ishlab chiqish Windows'da, build esa Linux'da (GitHub Actions)
+#  ketadi. Repozitoriyda HAMMA NARSA LF bo'lsin — aks holda bir xil
+#  fayl ikki muhitda boshqacha ko'rinadi va farqlar shovqin bilan
+#  to'ladi.
+#
+#  CNAME uchun bu shunchaki tartib emas, TALAB: GitHub Pages bu
+#  faylni domen nomi sifatida o'qiydi va oxiridagi CR belgisi nomni
+#  buzib yuborishi mumkin.
+# =====================================================================
+
+* text=auto eol=lf
+
+
+# Ikkilik fayllar — tegilmaydi.
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff  binary
+*.woff2 binary
+apps/super-admin/public/CNAME text eol=lf

@@ -1,0 +1,9 @@
+{
+  "//": "Faqat mahalliy tekshiruv uchun. Supabase Edge Runtime bu faylsiz ham ishlaydi.",
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@supabase/supabase-js": "jsr:@supabase/supabase-js@2"
+  },
+  "lint": { "rules": { "tags": ["recommended"] } },
+  "fmt": { "singleQuote": true, "lineWidth": 80 }
+}

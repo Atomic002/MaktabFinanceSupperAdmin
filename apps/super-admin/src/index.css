@@ -1,0 +1,203 @@
+@import 'tailwindcss';
+
+/* =====================================================================
+   `dark:` VARIANTI — ilova mavzusiga bog'lanadi.
+
+   Tailwind standart holatda `dark:` ni FAQAT operatsion tizim
+   sozlamasiga (`prefers-color-scheme`) qarab qo'llaydi. Bizda esa
+   mavzu tugmasi bor va u `data-theme` atributini qo'yadi.
+
+   Ikkisi bir-biriga bog'lanmagani XATOGA olib kelardi: kompyuteri
+   tungi rejimda turgan foydalanuvchi ilovada OQ mavzuni tanlasa,
+   fon oqarardi, lekin `dark:text-...` sinflari baribir ishlab
+   OCHIQ RANGLI matn berardi — oq fonda oq yozuv, ya'ni ko'rinmas
+   matn.
+
+   Quyidagi ta'rif aynan CSS o'zgaruvchilari bilan bir xil mantiqda
+   ishlaydi: aniq tanlangan tungi mavzu YOKI tizim tungi (va ilovada
+   oq majburlanmagan).
+   ===================================================================== */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) { @slot; }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+}
+
+/* =====================================================================
+   DIZAYN TIZIMI — MaktabFinance
+
+   Brend ranglari logotipdan olingan:
+     navy  #1E2B3D — asosiy, sarlavhalar, yon panel
+     green #5F7F4F — urg'u, tasdiq, ijobiy qiymatlar
+
+   Tamoyil: minimalistik va ZICH. Buxgalter kuniga yuzlab qatorni
+   ko'radi — bo'sh joy emas, o'qish qulayligi muhim. Shuning uchun
+   jadval qatorlari past, shrift kichik, lekin kontrast yuqori.
+   ===================================================================== */
+
+@theme {
+  /* --- Brend --- */
+  --color-brand-50:  #f2f5f8;
+  --color-brand-100: #e3e9ef;
+  --color-brand-200: #c7d2de;
+  --color-brand-300: #9cb0c4;
+  --color-brand-400: #6a86a3;
+  --color-brand-500: #486a8a;
+  --color-brand-600: #365371;
+  --color-brand-700: #2b425c;
+  --color-brand-800: #24374c;
+  --color-brand-900: #1E2B3D;
+  --color-brand-950: #131c28;
+
+  /* --- Urg'u (yashil) --- */
+  --color-accent-50:  #f4f7f2;
+  --color-accent-100: #e6ede1;
+  --color-accent-200: #cedcc5;
+  --color-accent-300: #adc2a0;
+  --color-accent-400: #87a577;
+  --color-accent-500: #5F7F4F;
+  --color-accent-600: #4d693f;
+  --color-accent-700: #3e5434;
+  --color-accent-800: #33442c;
+  --color-accent-900: #2b3926;
+
+  /* Moliyaviy tizimda pul uchun tabular raqamlar SHART — ustunlar
+     bir-biriga to'g'ri kelishi kerak. */
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
+}
+
+:root {
+  --bg:          #ffffff;
+  --bg-subtle:   #f7f8fa;
+  --bg-inset:    #eef1f5;
+  --border:      #dde3ea;
+  --border-soft: #eaeef3;
+  --text:        #14202e;
+  --text-muted:  #5b6b7d;
+  --text-faint:  #8695a5;
+
+  /* Logotipdagi "Maktab" so'zi. Mavzuga qarab o'zgaradi — shuning
+     uchun `dark:` sinfi kerak emas. */
+  --brand-text:  #1E2B3D;
+
+  /* TANLANGAN holat: faol chip, tanlangan qator, tanlangan kartochka.
+     Fon va MATN birga o'zgaradi. Ilgari bu yerlarda `bg-brand-50`
+     turardi — u mavzudan qat'i nazar oqish rangda qolardi va tungi
+     rejimda ochiq matn ochiq fonga tushib, yozuv ko'rinmay qolardi. */
+  --sel-bg:      #eaf0f6;
+  --sel-text:    #1E2B3D;
+  --sel-border:  #486a8a;
+
+  --ok:      #2f7d4f;
+  --ok-bg:   #eaf5ee;
+  --warn:    #a16207;
+  --warn-bg: #fdf6e3;
+  --danger:  #b4232a;
+  --danger-bg: #fdeded;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg:          #10151d;
+  --bg-subtle:   #151c26;
+  --bg-inset:    #1b242f;
+  --border:      #29343f;
+  --border-soft: #202932;
+  --text:        #e6ecf3;
+  --text-muted:  #9aa9b9;
+  --text-faint:  #6f7f90;
+  --brand-text:  #e3e9ef;
+  --sel-bg:      #1d2b3b;
+  --sel-text:    #dce6f0;
+  --sel-border:  #5b83ab;
+
+  --ok:      #6ac08b;
+  --ok-bg:   #17301f;
+  --warn:    #e0b155;
+  --warn-bg: #322715;
+  --danger:  #f08a8f;
+  --danger-bg: #331a1c;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg:          #10151d;
+    --bg-subtle:   #151c26;
+    --bg-inset:    #1b242f;
+    --border:      #29343f;
+    --border-soft: #202932;
+    --text:        #e6ecf3;
+    --text-muted:  #9aa9b9;
+    --text-faint:  #6f7f90;
+    --brand-text:  #e3e9ef;
+    --sel-bg:      #1d2b3b;
+    --sel-text:    #dce6f0;
+    --sel-border:  #5b83ab;
+
+    --ok:      #6ac08b;
+    --ok-bg:   #17301f;
+    --warn:    #e0b155;
+    --warn-bg: #322715;
+    --danger:  #f08a8f;
+    --danger-bg: #331a1c;
+
+    color-scheme: dark;
+  }
+}
+
+* { border-color: var(--border); }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg-subtle);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+               system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  /* O'zbek matnida "o'" va "g'" apostroflari to'g'ri chiqsin */
+  text-rendering: optimizeLegibility;
+}
+
+/* Pul va sana ustunlari — tabular raqamlar */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Fokus halqasi: klaviatura bilan ishlash buxgalter uchun muhim */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+/* Keng jadvallar o'z konteyneri ichida siljisin, sahifa emas */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+  border: 2px solid var(--bg-subtle);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+/* Chop etishda faqat mazmun (kvitansiya, qaydnoma) */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; font-size: 12px; }
+}

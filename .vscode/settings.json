@@ -1,0 +1,19 @@
+{
+  "//": "Deno faqat Edge Function papkasida yoqiladi. Qolgan joyda (React ilovasi) oddiy Node/TypeScript ishlaydi.",
+  "deno.enable": true,
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.lint": true,
+  "deno.unstable": false,
+
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[sql]": { "editor.tabSize": 2 },
+
+  "editor.formatOnSave": true,
+  "files.eol": "\n",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/supabase/.temp": true
+  }
+}

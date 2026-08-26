@@ -1,0 +1,35 @@
+# Maxfiy kalitlar — HECH QACHON repo'ga tushmaydi
+.env
+.env.*
+!.env.example
+
+#  Ochiq repo: HECH QANDAY .env fayl bu yerga tushmaydi — hatto
+#  brauzerga chiqadigan publishable kalit ham. U build vaqtida
+#  GitHub Actions secret'idan yoziladi (.github/workflows/deploy.yml).
+# Ishlab chiqarish uchun OCHIQ kalitlar — himoya RLS da, sir emas.
+
+# Bog'liqliklar va build
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Supabase CLI ish fayllari
+.supabase/
+supabase/.temp/
+supabase/.branches/
+
+# Muharrir
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+
+# Loglar
+npm-debug.log*
+yarn-error.log*
+*.log
+.webhook-secret
+
+# TypeScript build keshi — mashinaga bogliq, repoga kerak emas
+*.tsbuildinfo

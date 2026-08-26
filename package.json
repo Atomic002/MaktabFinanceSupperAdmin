@@ -1,0 +1,36 @@
+{
+  "name": "maktab-super-admin",
+  "private": true,
+  "version": "1.0.0",
+  "description": "MaktabFinance platformasi — super admin paneli",
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=super-admin",
+    "build": "npm run build --workspace=super-admin",
+    "preview": "npm run preview --workspace=super-admin -- --host",
+    "typecheck": "npm run typecheck --workspace=super-admin",
+    "db:status": "node scripts/db.mjs status",
+    "db:push": "node scripts/db.mjs push",
+    "db:dry": "node scripts/dry-run.mjs --all",
+    "db:types": "node scripts/gen-types.mjs",
+    "fn:deploy": "npx supabase functions deploy platform-ops --project-ref $SUPABASE_PROJECT_REF",
+    "new-admin": "node scripts/new-platform-admin.mjs",
+    "billing:run": "node scripts/db.mjs sql \"select public.run_billing_cycle()\"",
+    "test:db": "node scripts/db.mjs file scripts/test-platform.sql",
+    "i18n:cyrl": "node scripts/make-cyrillic.mjs",
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "audit:code": "node scripts/audit-code.mjs",
+    "audit": "npm run audit:code && npm run audit:drift && npm run check:secrets && npm run i18n:check && npm run test:db",
+    "audit:drift": "node scripts/audit-drift.mjs"
+  },
+  "devDependencies": {
+    "supabase": "^2.115.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

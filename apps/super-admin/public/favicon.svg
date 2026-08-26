@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MaktabFinance">
+  <!-- ===================================================================
+       MaktabFinance belgisi — "MF" monogrammasi.
+
+       M — to'q ko'k, burchakli. Tepasi TEKIS kesilgan (stroke bilan
+       emas, to'ldirilgan shakl bilan chizilgan — aks holda miter
+       burchagi tepada uchli chiqib ketadi).
+       F — yashil, ikkita qiya uchli qo'l bilan.
+       Ustunlar — moliyaviy o'sish.
+
+       Brend ranglari:  navy #1E2B3D   ·   green #5F7F4F
+       =================================================================== -->
+  <defs>
+    <linearGradient id="mfBars" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3E5A33"/>
+      <stop offset="100%" stop-color="#7A9A6A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Belgi 68..452 × 152..424. Kanvas markaziga keltiriladi. -->
+  <g transform="translate(256,256) scale(1.12) translate(-260,-288)">
+
+    <!-- O'sish ustunlari: M ning V uchidan pastda, F poyasidan chapda -->
+    <rect x="216" y="388" width="24" height="36" fill="url(#mfBars)"/>
+    <rect x="248" y="364" width="24" height="60" fill="url(#mfBars)"/>
+    <rect x="280" y="340" width="24" height="84" fill="url(#mfBars)"/>
+
+    <!-- M: chap poya (to'liq balandlik) -->
+    <rect x="68" y="152" width="56" height="272" fill="#1E2B3D"/>
+    <!-- M: ikkita diagonal, tepasi tekis -->
+    <path d="M 68 152 L 124 152 L 240 262 L 306 152 L 362 152 L 256 330 Z"
+          fill="#1E2B3D"/>
+
+    <!-- F: poya va ikkita qiya uchli qo'l -->
+    <path d="M 306 152 H 362 V 424 H 306 Z" fill="#5F7F4F"/>
+    <path d="M 306 152 H 452 L 416 208 H 306 Z" fill="#5F7F4F"/>
+    <path d="M 306 254 H 412 L 376 310 H 306 Z" fill="#5F7F4F"/>
+  </g>
+</svg>

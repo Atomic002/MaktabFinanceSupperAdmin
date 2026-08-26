@@ -1,0 +1,117 @@
+# =====================================================================
+#  Super admin paneli → GitHub Pages
+#
+#  `main` shoxiga har bir push panelni qayta quradi va chiqaradi.
+#
+#  NEGA ALOHIDA REPO: bitta GitHub repo faqat BITTA Pages saytini
+#  chiqara oladi. Maktab paneli `maktab.uztomic.uz` da turibdi,
+#  shuning uchun super admin `admin.uztomic.uz` uchun o'z repositoriysi
+#  va o'z ishi kerak.
+#
+#  KALITLAR REPODA EMAS. Repo OCHIQ, shuning uchun hatto brauzerga
+#  chiqadigan publishable kalit ham fayl bilan birga kelmaydi — u
+#  GitHub Actions secret'idan build vaqtida yoziladi.
+#
+#  DIQQAT — BU KALITNI SIR QILMAYDI: publishable kalit tayyor
+#  saytning JS faylida baribir turadi va uni har kim o'qiy oladi.
+#  Shunday bo'lishi KERAK ham — himoya RLS darajasida, kalit
+#  sirligida emas. Secret'ga ko'chirishning ikkita foydasi bor:
+#  repo kalitni tayyor holda uzatmaydi, va kalit almashtirilganda
+#  bitta joy o'zgaradi.
+#
+#  service_role va sbp_ kalitlari bu yerda UMUMAN ishlatilmaydi.
+#  Ular faqat ishlab chiquvchining `.env.local` faylida.
+#
+#  Migratsiyalar HECH QACHON avtomatik qo'llanmaydi. Ular bazani
+#  o'zgartiradi va odam ko'rib chiqishi kerak:
+#    npm run db:dry && npm run db:push
+# =====================================================================
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Bog'liqliklarni o'rnatish
+        run: npm ci
+
+      - name: Maxfiy kalit tekshiruvi
+        run: node scripts/check-secrets.mjs
+
+      - name: Tarjima kalitlari to'liqmi
+        run: node scripts/i18n-check.mjs
+
+      - name: Qattiq yozilgan matn va boshqa kamchiliklar
+        run: node scripts/audit-code.mjs
+
+      # Vite `.env.production` ni build paytida o'qiydi. Fayl repoda
+      # yo'q, shuning uchun uni shu yerda yaratamiz. Secret sozlanmagan
+      # bo'lsa build ATAYLAB yiqiladi — bo'sh kalit bilan chiqarilgan
+      # sayt ishlamaydi va buni faqat foydalanuvchi sezardi.
+      - name: Muhit faylini yozish
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          PANEL_URL:    ${{ secrets.VITE_SCHOOL_PANEL_URL }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "XATO: VITE_SUPABASE_URL yoki VITE_SUPABASE_PUBLISHABLE_KEY"
+            echo "secret sifatida sozlanmagan."
+            echo "Settings → Secrets and variables → Actions → New repository secret"
+            exit 1
+          fi
+          {
+            echo "VITE_SUPABASE_URL=$SUPABASE_URL"
+            echo "VITE_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY"
+            echo "VITE_SCHOOL_PANEL_URL=${PANEL_URL:-https://maktab.uztomic.uz}"
+          } > apps/super-admin/.env.production
+
+      - name: Build
+        run: npm run build
+
+      # GitHub Pages'da server yo'naltirishlari yo'q. SPA da esa
+      # /maktablar kabi yo'llar haqiqiy fayl emas. Pages topilmagan
+      # yo'lda 404.html ni beradi — uni index.html nusxasi qilamiz.
+      - name: SPA uchun 404 nusxasi
+        run: cp apps/super-admin/dist/index.html apps/super-admin/dist/404.html
+
+      - name: Jekyll ni o'chirish
+        run: touch apps/super-admin/dist/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/super-admin/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
