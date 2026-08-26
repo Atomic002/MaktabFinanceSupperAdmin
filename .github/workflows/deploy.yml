@@ -10,7 +10,13 @@
 #
 #  KALITLAR REPODA EMAS. Repo OCHIQ, shuning uchun hatto brauzerga
 #  chiqadigan publishable kalit ham fayl bilan birga kelmaydi — u
-#  GitHub Actions secret'idan build vaqtida yoziladi.
+#  GitHub Actions VARIABLE idan build vaqtida yoziladi.
+#
+#  NEGA `vars`, `secrets` EMAS: publishable kalit SIR EMAS. Uni
+#  "secret" deb atash yolg'on bo'lardi va keyingi o'quvchini
+#  chalg'itardi — u kalitni himoyalangan deb o'ylab, uni tayyor
+#  saytdan o'qish mumkinligini bilmay qolardi. `vars` esa aynan
+#  shuni bildiradi: repoda emas, lekin sir ham emas.
 #
 #  DIQQAT — BU KALITNI SIR QILMAYDI: publishable kalit tayyor
 #  saytning JS faylida baribir turadi va uni har kim o'qiy oladi.
@@ -72,14 +78,14 @@ jobs:
       # sayt ishlamaydi va buni faqat foydalanuvchi sezardi.
       - name: Muhit faylini yozish
         env:
-          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          PANEL_URL:    ${{ secrets.VITE_SCHOOL_PANEL_URL }}
+          SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          PANEL_URL:    ${{ vars.VITE_SCHOOL_PANEL_URL }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
             echo "XATO: VITE_SUPABASE_URL yoki VITE_SUPABASE_PUBLISHABLE_KEY"
-            echo "secret sifatida sozlanmagan."
-            echo "Settings → Secrets and variables → Actions → New repository secret"
+            echo "variable sifatida sozlanmagan."
+            echo "Settings → Secrets and variables → Actions → Variables → New"
             exit 1
           fi
           {
