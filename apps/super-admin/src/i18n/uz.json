@@ -400,5 +400,11 @@
   "reset.once": "Parol faqat hozir ko'rsatiladi va boshqa hech qayerda saqlanmaydi. Uni nusxalab, direktorga yetkazing.",
   "reset.confirmCloseTitle": "Parolni saqlab oldingizmi?",
   "reset.confirmClose": "Bu oyna yopilgandan keyin parolni qayta ko'rish IMKONSIZ, direktor esa eski paroli bilan kira olmaydi. Saqlab olganingizga ishonchingiz komilmi?",
-  "common.close": "Yopish"
+  "common.close": "Yopish",
+  "school.edit": "Ma'lumotni tahrirlash",
+  "school.lang": "Standart til",
+  "school.langHint": "Yangi xodim va ota-onalar shu tilda ko'radi",
+  "school.closingDay": "Oy yopish sanasi",
+  "school.closingDayHint": "Shu sanadan keyin o'tgan davr qulflanadi",
+  "school.editHint": "O'zgarish darhol kuchga kiradi. Har bir maydon platforma jurnaliga eski va yangi qiymat bilan yoziladi, maktab direktori esa uni o'z jurnalida \"platforma o'zgartirdi\" deb ko'radi."
 }

@@ -54,6 +54,7 @@ export default function SchoolCard() {
   const [changingPlan, setChangingPlan] = useState(false);
   const [recording, setRecording] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const card = useQuery({
     queryKey: ['school-card', id],
@@ -177,6 +178,7 @@ export default function SchoolCard() {
         actions={
           <>
             <Link to="/maktablar"><Button>{t('common.back')}</Button></Link>
+            <Button onClick={() => setEditing(true)}>{t('school.edit')}</Button>
             <Button onClick={() => setChangingPlan(true)}>{t('school.changePlan')}</Button>
             <Button onClick={() => setChangingStatus(true)}>{t('school.changeStatus')}</Button>
             <Button variant="accent" onClick={() => setRecording(true)}>
@@ -449,6 +451,14 @@ export default function SchoolCard() {
         <PlanModal
           schoolId={id}
           onClose={() => setChangingPlan(false)}
+          onDone={refreshAll}
+        />
+      )}
+      {editing && (
+        <EditSchoolModal
+          schoolId={id}
+          school={c.school}
+          onClose={() => setEditing(false)}
           onDone={refreshAll}
         />
       )}
@@ -896,6 +906,118 @@ function ResetPasswordModal({ schoolId, user, onClose }: {
           <p className="text-[13px] text-[var(--text-muted)]">{t('reset.hint')}</p>
         </div>
       )}
+    </Modal>
+  );
+}
+
+// =====================================================================
+//  MAKTAB MA'LUMOTINI TAHRIRLASH
+//
+//  Ilgari super admin HECH NARSANI o'zgartira olmasdi: barcha yozish
+//  siyosatlari `school_id = app.school_id()` ni talab qiladi,
+//  platforma adminida esa u NULL. Maktab nomidagi xatoni ham
+//  tuzatib bo'lmasdi.
+//
+//  NEGA RPC, TO'G'RIDAN-TO'G'RI UPDATE EMAS: 52-migratsiyadan keyin
+//  `schools` ga to'g'ridan-to'g'ri yozish ham mumkin, lekin u faqat
+//  `audit_log` ga tushardi. RPC esa `platform_log` ga oldingi va
+//  yangi qiymat bilan yozadi — operator "men nima o'zgartirgan edim"
+//  degan savolga javob topsin.
+//
+//  `status` bu yerda YO'Q: uning o'z oynasi bor va u sababni
+//  majburiy qiladi.
+// =====================================================================
+
+function EditSchoolModal({ schoolId, school, onClose, onDone }: {
+  schoolId: string;
+  school: Record<string, string | null>;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const t = useT();
+  const toast = useToast();
+  const [f, setF] = useState({
+    name: school.name ?? '',
+    legal_name: school.legal_name ?? '',
+    tax_id: school.tax_id ?? '',
+    address: school.address ?? '',
+    phone: school.phone ?? '',
+    email: school.email ?? '',
+    default_lang: school.default_lang ?? 'uz',
+    closing_day: String(school.closing_day ?? 5),
+  });
+
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) =>
+    setF((prev) => ({ ...prev, [k]: e.target.value }));
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc('update_school_profile', {
+        p_school_id: schoolId,
+        p_name: f.name.trim(),
+        //  Bo'sh maydon "tegilmasin" degani (RPC da `coalesce`).
+        //  Shuning uchun bo'shini `undefined` qilib yuboramiz.
+        p_legal_name: f.legal_name.trim() || undefined,
+        p_tax_id: f.tax_id.trim() || undefined,
+        p_address: f.address.trim() || undefined,
+        p_phone: f.phone.trim() || undefined,
+        p_email: f.email.trim() || undefined,
+        p_default_lang: f.default_lang,
+        p_closing_day: Number(f.closing_day),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.ok(t('ux.saved')); onDone(); onClose(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <Modal open wide title={t('school.edit')} onClose={onClose} footer={
+      <>
+        <Button onClick={onClose}>{t('common.cancel')}</Button>
+        <Button variant="primary" disabled={f.name.trim().length < 2 || save.isPending}
+                onClick={() => save.mutate()}>
+          {save.isPending ? t('common.saving') : t('common.save')}
+        </Button>
+      </>
+    }>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label={t('schools.name')} required>
+          <Input value={f.name} onChange={set('name')} required />
+        </Field>
+        <Field label={t('school.legalName')}>
+          <Input value={f.legal_name} onChange={set('legal_name')} />
+        </Field>
+        <Field label={t('schools.taxId')}>
+          <Input value={f.tax_id} onChange={set('tax_id')} inputMode="numeric" />
+        </Field>
+        <Field label={t('schools.phone')}>
+          <Input value={f.phone} onChange={set('phone')} inputMode="tel" />
+        </Field>
+        <Field label={t('school.email')}>
+          <Input value={f.email} onChange={set('email')} type="email" />
+        </Field>
+        <Field label={t('school.address')}>
+          <Input value={f.address} onChange={set('address')} />
+        </Field>
+        <Field label={t('school.lang')} hint={t('school.langHint')}>
+          <Select value={f.default_lang} onChange={set('default_lang')}>
+            <option value="uz">O'zbekcha</option>
+            <option value="uz-cyrl">Ўзбекча</option>
+            <option value="ru">Русский</option>
+          </Select>
+        </Field>
+        <Field label={t('school.closingDay')} hint={t('school.closingDayHint')}>
+          <Select value={f.closing_day} onChange={set('closing_day')}>
+            {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+              <option key={d} value={String(d)}>{d}</option>
+            ))}
+          </Select>
+        </Field>
+      </div>
+      <div className="mt-3">
+        <Notice tone="brand">{t('school.editHint')}</Notice>
+      </div>
     </Modal>
   );
 }

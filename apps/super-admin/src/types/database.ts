@@ -995,6 +995,7 @@ export type Database = {
           deleted_at: string | null
           document_path: string | null
           id: string
+          method_id: string | null
           note: string | null
           payment_method: string
           payroll_run_id: string | null
@@ -1011,6 +1012,7 @@ export type Database = {
           deleted_at?: string | null
           document_path?: string | null
           id?: string
+          method_id?: string | null
           note?: string | null
           payment_method?: string
           payroll_run_id?: string | null
@@ -1027,6 +1029,7 @@ export type Database = {
           deleted_at?: string | null
           document_path?: string | null
           id?: string
+          method_id?: string | null
           note?: string | null
           payment_method?: string
           payroll_run_id?: string | null
@@ -1054,6 +1057,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_method_id_fkey"
+            columns: ["method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
           {
@@ -1760,6 +1770,53 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          code: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          is_cash: boolean
+          name: string
+          school_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_cash?: boolean
+          name: string
+          school_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_cash?: boolean
+          name?: string
+          school_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_proofs: {
         Row: {
           amount_claimed: number | null
@@ -1878,6 +1935,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          method_id: string | null
           note: string | null
           paid_on: string
           school_id: string
@@ -1895,6 +1953,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          method_id?: string | null
           note?: string | null
           paid_on?: string
           school_id: string
@@ -1912,6 +1971,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          method_id?: string | null
           note?: string | null
           paid_on?: string
           school_id?: string
@@ -1939,6 +1999,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_method_id_fkey"
+            columns: ["method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
           {
@@ -3231,6 +3298,7 @@ export type Database = {
       teachers: {
         Row: {
           base_salary: number
+          base_type: string | null
           category: string | null
           created_at: string
           deleted_at: string | null
@@ -3248,6 +3316,7 @@ export type Database = {
         }
         Insert: {
           base_salary?: number
+          base_type?: string | null
           category?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -3265,6 +3334,7 @@ export type Database = {
         }
         Update: {
           base_salary?: number
+          base_type?: string | null
           category?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -3471,6 +3541,7 @@ export type Database = {
           net_total: number | null
           payroll_run_id: string | null
           period: string | null
+          rounding_total: number | null
           school_id: string | null
           status: Database["public"]["Enums"]["payroll_status"] | null
           teacher_id: string | null
@@ -3547,6 +3618,17 @@ export type Database = {
       cancel_payment: {
         Args: { p_payment_id: string; p_reason: string }
         Returns: Json
+      }
+      class_attendance_students: {
+        Args: { p_class_id: string; p_day?: string }
+        Returns: {
+          full_name: string
+          is_present: boolean
+          marked_at: string
+          note: string
+          reason_name: string
+          student_id: string
+        }[]
       }
       cleanup_expired_files: { Args: never; Returns: Json }
       confirm_payment_proof: {
@@ -3634,6 +3716,15 @@ export type Database = {
           p_subject: string
         }
         Returns: Json
+      }
+      payroll_config_issues: {
+        Args: { p_period?: string }
+        Returns: {
+          code: string
+          hint: string
+          message: string
+          severity: string
+        }[]
       }
       pending_absence_warnings: {
         Args: { p_branch_id?: string; p_days_back?: number }
@@ -3747,6 +3838,7 @@ export type Database = {
       register_cash_payment: {
         Args: {
           p_amount: number
+          p_method_id?: string
           p_note?: string
           p_paid_on?: string
           p_student_id: string
@@ -3765,6 +3857,21 @@ export type Database = {
           class_name: string
           full_name: string
           student_id: string
+        }[]
+      }
+      report_attendance_today: {
+        Args: { p_branch_id?: string; p_day?: string }
+        Returns: {
+          absent: number
+          branch_id: string
+          checked: boolean
+          class_id: string
+          class_name: string
+          grade_level: number
+          marked_at: string
+          present: number
+          teacher_name: string
+          total: number
         }[]
       }
       report_by_class: {
@@ -3888,6 +3995,20 @@ export type Database = {
           total: number
         }[]
       }
+      report_lead_sources: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string }
+        Returns: {
+          accepted: number
+          collected: number
+          conversion: number
+          is_direct: boolean
+          leads: number
+          open_count: number
+          rejected: number
+          source: string
+          students_active: number
+        }[]
+      }
       report_monthly_trend: {
         Args: { p_branch_id?: string; p_months?: number }
         Returns: {
@@ -3901,6 +4022,17 @@ export type Database = {
           students: number
         }[]
       }
+      report_payment_methods: {
+        Args: { p_branch_id?: string; p_from: string; p_to: string }
+        Returns: {
+          amount: number
+          is_cash: boolean
+          method_id: string
+          method_name: string
+          payments: number
+          share: number
+        }[]
+      }
       report_payroll: {
         Args: { p_period: string }
         Returns: {
@@ -3909,6 +4041,7 @@ export type Database = {
           hours: number
           net_total: number
           payroll_run_id: string
+          rounding: number
           status: Database["public"]["Enums"]["payroll_status"]
           teacher_id: string
           teacher_name: string
@@ -3979,6 +4112,7 @@ export type Database = {
         }[]
       }
       seed_school_defaults: { Args: { p_school_id: string }; Returns: Json }
+      send_attendance_notices: { Args: never; Returns: Json }
       send_due_reminders: { Args: never; Returns: Json }
       set_platform_setting: {
         Args: { p_key: string; p_reason?: string; p_value: Json }
@@ -4043,6 +4177,21 @@ export type Database = {
           p_months?: number
           p_note?: string
           p_paid_on: string
+        }
+        Returns: Json
+      }
+      update_school_profile: {
+        Args: {
+          p_address?: string
+          p_closing_day?: number
+          p_default_lang?: string
+          p_email?: string
+          p_legal_name?: string
+          p_name?: string
+          p_phone?: string
+          p_school_id: string
+          p_tax_id?: string
+          p_timezone?: string
         }
         Returns: Json
       }

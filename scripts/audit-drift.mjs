@@ -65,16 +65,30 @@ const OWNED_FUNCTIONS = [
   'start_impersonation', 'end_impersonation', 'school_users',
   'open_support_thread', 'post_support_message',
   'set_support_thread_status', 'mark_support_read',
-  'run_billing_cycle',
+  'run_billing_cycle', 'update_school_profile',
   'platform_schools', 'platform_overview', 'platform_revenue',
   'platform_school_card',
 ];
 
-//  Bu repo qo'llagan migratsiyalar shu boshlanish bilan tanaladi.
-//  Qolganlari — asosiy reponiki va bu yerda tekshirilmaydi.
-const OWNED_VERSION_PREFIXES = ['2026082612', '2026082615'];
+//  QAYSI MIGRATSIYA BIZNIKI — VAQT UYASI BO'YICHA.
+//
+//  Versiya `YYYYMMDD` + `HHMMSS`. Ikkala repo bitta tarix jadvaliga
+//  yozadi, shuning uchun raqamlar to'qnashmasligi kerak: bu repo
+//  HAR DOIM `15` uyasini oladi, asosiy repo `12`–`14` ni.
+//
+//  Sana bo'yicha ro'yxat yuritish ishlamadi: har yangi kunda ikkala
+//  repoga ham qo'lda qo'shish kerak bo'lardi va biri unutilishi
+//  aniq edi. Uya esa o'zgarmaydi.
+//
+//  Istisno — birinchi o'nta migratsiya `12` uyasida yozilgan,
+//  qoida joriy qilinishidan oldin.
+const LEGACY = new Set([
+  '20260826120000', '20260826120001', '20260826120002', '20260826120003',
+  '20260826120004', '20260826120005', '20260826120006', '20260826120007',
+  '20260826120008', '20260826120009',
+]);
 
-const isOurs = (v) => OWNED_VERSION_PREFIXES.some((p) => v.startsWith(p));
+const isOurs = (v) => v.slice(8, 10) === '15' || LEGACY.has(v);
 
 async function loadEnv() {
   const path = join(ROOT, '.env.local');
