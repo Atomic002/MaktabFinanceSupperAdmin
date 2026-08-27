@@ -74,10 +74,11 @@ function looksLikePhone(v: string): boolean {
 // ---------------------------------------------------------------------
 //  Parol — `scripts/password.mjs` bilan AYNAN bir xil qoida.
 //
-//  Supabase parol siyosati (harden-auth.mjs) 12+ belgi va uch xil
-//  sinfni talab qiladi. Tasodifga qoldirilsa Admin API parolni rad
-//  etadi va maktab yarim holatda qolib ketadi: `schools` yozuvi bor,
-//  direktor hisobi yo'q.
+//  Supabase parol siyosati (harden-auth.mjs) eng kam uzunlik va uch
+//  xil belgi sinfini talab qiladi. Tasodifga qoldirilsa Admin API
+//  parolni rad etadi va maktab yarim holatda qolib ketadi: `schools`
+//  yozuvi bor, direktor hisobi yo'q. Shuning uchun 14 belgi va har
+//  sinfdan bittasi KAFOLATLANADI — siyosat qanday bo'lsa ham yetadi.
 // ---------------------------------------------------------------------
 const LOWER = 'abcdefghijkmnpqrstuvwxyz';
 const UPPER = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -249,7 +250,19 @@ Deno.serve(async (req) => {
     if (!login?.trim()) return fail('Direktor uchun login kerak');
 
     // --- 1) Maktab + filial + obuna + shablon sozlamalar ----------
-    const { data: prov, error: provErr } = await caller.rpc('provision_school', {
+    //
+    //  DIQQAT — `admin`, `caller` EMAS. `provision_school` ga
+    //  `authenticated` roli huquqi ATAYLAB berilmagan (migratsiya 24):
+    //  "kerak bo'lmagan huquq berilmaydi" tamoyili, va funksiya
+    //  izohida ham "Edge Function orqali, service_role bilan" deb
+    //  yozilgan. `caller` bilan chaqirilsa Postgres
+    //  `permission denied for function provision_school` beradi.
+    //
+    //  Chaqiruvchi platforma admini ekani yuqorida allaqachon
+    //  tekshirilgan, shuning uchun service_role bilan chaqirish
+    //  xavfsiz. Kim ulaganini esa quyida alohida jurnalga yozamiz —
+    //  service_role kontekstida `auth.uid()` null bo'ladi.
+    const { data: prov, error: provErr } = await admin.rpc('provision_school', {
       p_name: name.trim(),
       p_branch_name: body.branch_name?.trim() || 'Asosiy filial',
       p_plan_code: body.plan_code ?? 'basic',
@@ -304,8 +317,20 @@ Deno.serve(async (req) => {
     //  Sinov muddati tugagunicha to'lov talab qilinmaydi, lekin
     //  hisob-faktura darhol chiqariladi: direktor birinchi kundanoq
     //  qancha to'lashini bilib tursin.
-    const { data: invoice } = await caller.rpc('issue_subscription_invoice', {
+    const { data: invoice } = await admin.rpc('issue_subscription_invoice', {
       p_school_id: schoolId,
+    });
+
+    //  `provision_school` service_role bilan chaqirilgani uchun
+    //  `platform_log` da `admin_id` bo'sh qoladi. Kim ulaganini
+    //  ALOHIDA yozamiz — chaqiruvchi tokeni bilan, ya'ni yozuvda
+    //  haqiqiy operator ko'rinadi.
+    await caller.rpc('log_platform_action', {
+      p_action: 'school_provisioned_by',
+      p_entity: 'schools',
+      p_entity_id: schoolId,
+      p_school_id: schoolId,
+      p_detail: { name: name.trim(), login: isPhone ? login : email },
     });
 
     return json({
