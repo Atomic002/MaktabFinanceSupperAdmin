@@ -391,5 +391,14 @@
   "pdet.value": "Qiymat",
   "pdet.monthly_amount": "Oylik to'lov",
   "pdet.next_payment_date": "Keyingi to'lov",
-  "pdet.trial_ends_at": "Sinov tugaydi"
+  "pdet.trial_ends_at": "Sinov tugaydi",
+  "school.resetPassword": "parolni tiklash",
+  "reset.action": "Parolni tiklash",
+  "reset.working": "Tiklanmoqda...",
+  "reset.warning": "{name} ning paroli almashtiriladi va u hozirgi paroli bilan KIRA OLMAYDI. Yangi parolni unga yetkazishingiz kerak.",
+  "reset.hint": "Bu amal jurnalga yoziladi. Direktorning ma'lumotlariga tegilmaydi — faqat parol o'zgaradi.",
+  "reset.once": "Parol faqat hozir ko'rsatiladi va boshqa hech qayerda saqlanmaydi. Uni nusxalab, direktorga yetkazing.",
+  "reset.confirmCloseTitle": "Parolni saqlab oldingizmi?",
+  "reset.confirmClose": "Bu oyna yopilgandan keyin parolni qayta ko'rish IMKONSIZ, direktor esa eski paroli bilan kira olmaydi. Saqlab olganingizga ishonchingiz komilmi?",
+  "common.close": "Yopish"
 }

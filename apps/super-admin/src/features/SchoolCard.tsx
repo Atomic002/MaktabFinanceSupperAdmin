@@ -53,6 +53,7 @@ export default function SchoolCard() {
   const [changingStatus, setChangingStatus] = useState(false);
   const [changingPlan, setChangingPlan] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const card = useQuery({
     queryKey: ['school-card', id],
@@ -207,6 +208,18 @@ export default function SchoolCard() {
           <Row label={t('school.email')}>{c.school.email ?? '—'}</Row>
           <Row label={t('school.director')}>
             {c.director?.full_name ?? '—'}
+            {/*  Parolni tiklash — eng ko'p uchraydigan yordam so'rovi.
+                 Shuning uchun u direktor nomi yonida turadi, alohida
+                 ekranda emas. */}
+            {c.director && (
+              <button
+                onClick={() => setResetting(true)}
+                className="ml-2 text-[12px] text-[var(--text-muted)] underline
+                  underline-offset-2 hover:text-[var(--text)]"
+              >
+                {t('school.resetPassword')}
+              </button>
+            )}
             {c.director?.email && (
               <span className="ml-1 text-[var(--text-faint)]">{c.director.email}</span>
             )}
@@ -437,6 +450,13 @@ export default function SchoolCard() {
           schoolId={id}
           onClose={() => setChangingPlan(false)}
           onDone={refreshAll}
+        />
+      )}
+      {resetting && c.director && (
+        <ResetPasswordModal
+          schoolId={id}
+          user={c.director}
+          onClose={() => setResetting(false)}
         />
       )}
       {recording && (
@@ -790,6 +810,92 @@ function RecordPaymentModal({ schoolId, suggested, onClose, onDone }: {
           <Input value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
       </div>
+    </Modal>
+  );
+}
+
+// =====================================================================
+//  DIREKTOR PAROLINI TIKLASH
+//
+//  Parol FAQAT BIR MARTA ko'rsatiladi va hech qayerda saqlanmaydi —
+//  `new-school` oqimidagi bilan bir xil qoida. Shuning uchun oyna
+//  yopilishidan oldin tasdiqlash so'raladi.
+//
+//  Amal Edge Function orqali bajariladi: parolni almashtirish Auth
+//  Admin API sini, ya'ni `service_role` kalitini talab qiladi va u
+//  brauzerga hech qachon berilmaydi.
+// =====================================================================
+
+function ResetPasswordModal({ schoolId, user, onClose }: {
+  schoolId: string;
+  user: { id: string; full_name: string };
+  onClose: () => void;
+}) {
+  const t = useT();
+  const toast = useToast();
+  const confirm = useConfirm();
+  const [password, setPassword] = useState<string | null>(null);
+
+  const reset = useMutation({
+    mutationFn: async () => await callPlatformOps<{ password: string }>({
+      action: 'reset_director_password',
+      school_id: schoolId,
+      user_id: user.id,
+    }),
+    onSuccess: (d) => setPassword(d.password),
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  async function close() {
+    //  Parol ko'rsatilgan bo'lsa, tasodifan yopib yuborish —
+    //  direktorni tizimdan chiqarib qo'yish demakdir.
+    if (password) {
+      const ok = await confirm({
+        title: t('reset.confirmCloseTitle'),
+        message: t('reset.confirmClose'),
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    onClose();
+  }
+
+  return (
+    <Modal open title={t('school.resetPassword')} onClose={close} footer={
+      password ? (
+        <Button variant="primary" onClick={close}>{t('common.close')}</Button>
+      ) : (
+        <>
+          <Button onClick={close}>{t('common.cancel')}</Button>
+          <Button variant="danger" disabled={reset.isPending}
+                  onClick={() => reset.mutate()}>
+            {reset.isPending ? t('reset.working') : t('reset.action')}
+          </Button>
+        </>
+      )
+    }>
+      {password ? (
+        <div className="space-y-3">
+          <Notice tone="warn">{t('reset.once')}</Notice>
+          <Field label={t('newSchool.password')}>
+            <Input value={password} readOnly onFocus={(e) => e.currentTarget.select()} />
+          </Field>
+          <Button
+            onClick={() => {
+              navigator.clipboard.writeText(password)
+                .then(() => toast.ok(t('newSchool.copied')))
+                .catch(() => toast.error(t('newSchool.copyFailed')));
+            }}
+          >
+            {t('newSchool.copy')}
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <Notice tone="danger">{t('reset.warning', { name: user.full_name })}</Notice>
+          <p className="text-[13px] text-[var(--text-muted)]">{t('reset.hint')}</p>
+        </div>
+      )}
     </Modal>
   );
 }
