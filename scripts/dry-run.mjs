@@ -15,6 +15,16 @@
 //
 //    node scripts/dry-run.mjs supabase/migrations/xxx.sql
 //    node scripts/dry-run.mjs --all
+//
+//  DIQQAT: `--all` butun TARIXNI qayta yuguradi. Allaqachon qo'llangan
+//  eski migratsiyalar tabiiy ravishda xato beradi — "policy already
+//  exists", "type already exists", "cannot change return type". Bu
+//  buzuqlik EMAS: o'sha fayllar bir marta ishlashga mo'ljallangan va
+//  toza bazada tartib bo'yicha to'g'ri bajariladi.
+//
+//  Shuning uchun kundalik ishda YANGI faylni alohida tekshiring.
+//  `--all` faqat toza bazaga ko'chirishdan oldin, natijani o'qib
+//  chiqadigan odam bo'lganda ma'noli.
 // =====================================================================
 
 import { readFile, readdir } from 'node:fs/promises';

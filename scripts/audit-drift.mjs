@@ -23,7 +23,7 @@
 // =====================================================================
 
 import { readFile, readdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -70,25 +70,36 @@ const OWNED_FUNCTIONS = [
   'platform_school_card',
 ];
 
-//  QAYSI MIGRATSIYA BIZNIKI — VAQT UYASI BO'YICHA.
+//  QAYSI MIGRATSIYA BIZNIKI.
 //
-//  Versiya `YYYYMMDD` + `HHMMSS`. Ikkala repo bitta tarix jadvaliga
-//  yozadi, shuning uchun raqamlar to'qnashmasligi kerak: bu repo
-//  HAR DOIM `15` uyasini oladi, asosiy repo `12`–`14` ni.
+//  Ilgari bu vaqt uyasi bo'yicha aniqlanardi: "bu repo `15` ni
+//  oladi, asosiy repo `12`-`14` ni". Kelishuv BUZILDI —
+//  2026-08-31 da asosiy repo bir kunda `12` dan `23` gacha
+//  o'ntadan ortiq migratsiya yozdi va `15` ni ham egalladi.
+//  Natijada bu audit begona migratsiyani "meniki, fayli yo'q" deb
+//  ko'rsata boshladi.
 //
-//  Sana bo'yicha ro'yxat yuritish ishlamadi: har yangi kunda ikkala
-//  repoga ham qo'lda qo'shish kerak bo'lardi va biri unutilishi
-//  aniq edi. Uya esa o'zgarmaydi.
+//  Kelishuvga tayanish noto'g'ri edi: u ikkala repo yozuvchisining
+//  esida turishini talab qiladi. Endi HAQIQAT tekshiriladi — qo'shni
+//  reponing migratsiya papkasiga qaraladi. U yerda fayl bo'lsa,
+//  versiya begona.
 //
-//  Istisno — birinchi o'nta migratsiya `12` uyasida yozilgan,
-//  qoida joriy qilinishidan oldin.
-const LEGACY = new Set([
-  '20260826120000', '20260826120001', '20260826120002', '20260826120003',
-  '20260826120004', '20260826120005', '20260826120006', '20260826120007',
-  '20260826120008', '20260826120009',
-]);
+//  Qo'shni repo topilmasa (masalan CI da faqat shu repo bor),
+//  tekshiruv o'tkazib yuboriladi va bu ochiq aytiladi — jimgina
+//  "hammasi joyida" deb turishdan ko'ra.
+const SIBLING = join(ROOT, '..', '..', 'Xususiy Maktablar Moliya  Tizmi',
+                     'supabase', 'migrations');
 
-const isOurs = (v) => v.slice(8, 10) === '15' || LEGACY.has(v);
+/** Qo'shni repodagi migratsiya versiyalari. Topilmasa — null. */
+function siblingVersions() {
+  if (!existsSync(SIBLING)) return null;
+  return new Set(
+    readdirSync(SIBLING)
+      .filter((f) => f.endsWith('.sql'))
+      .map((f) => (f.match(/^(\d+)_/) ?? [])[1])
+      .filter(Boolean),
+  );
+}
 
 async function loadEnv() {
   const path = join(ROOT, '.env.local');
@@ -181,12 +192,15 @@ for (const [i, v] of versions.entries()) {
 //  Eng xavflisi shu: baza fayllardan oldinda va toza baza BOSHQACHA
 //  quriladi. Faqat BIZNING oraliqdagi versiyalar tekshiriladi.
 const known = new Set(versions);
+const sib = siblingVersions();
 let foreign = 0;
 
 for (const v of [...applied].sort()) {
   if (known.has(v)) continue;
-  if (!isOurs(v)) { foreign++; continue; }
-  problems.push(`tarixda bor, fayli yo'q: ${v}`);
+  //  Qo'shni repoda fayli bormi? Bor bo'lsa — begona, hammasi joyida.
+  if (sib && sib.has(v)) { foreign++; continue; }
+  if (!sib) { foreign++; continue; }   // qo'shni repo topilmadi — quyida aytiladi
+  problems.push(`tarixda bor, HECH QAYSI repoda fayli yo'q: ${v}`);
 }
 
 // --- Natija ------------------------------------------------------------
@@ -194,6 +208,10 @@ console.log(`\nMigratsiya fayli: ${files.length}, tarixda jami: ${applied.size}`
 console.log(`Asosiy reponiki (tekshirilmadi): ${foreign}`);
 console.log(`Egalik qilinadigan obyekt: ${OWNED_TABLES.length} jadval, `
   + `${OWNED_ENUMS.length} enum, ${OWNED_FUNCTIONS.length} funksiya`);
+
+if (!sib) {
+  console.log("DIQQAT: qo'shni repo topilmadi — begona migratsiyalar tekshirilmadi.");
+}
 
 if (problems.length === 0) {
   console.log('\n  ✓ Baza va repo mos — toza bazada ham shu holat quriladi\n');
