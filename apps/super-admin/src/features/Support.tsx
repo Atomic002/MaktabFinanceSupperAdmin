@@ -238,7 +238,7 @@ export default function Support() {
                         system
                           ? 'w-full bg-[var(--bg-inset)] text-center text-[var(--text-muted)]'
                           : mine
-                            ? 'bg-brand-900 text-white'
+                            ? 'bg-[var(--primary)] text-[var(--on-primary)]'
                             : 'border bg-[var(--bg)]'
                       }`}>
                         <p className="whitespace-pre-wrap">{m.body as string}</p>

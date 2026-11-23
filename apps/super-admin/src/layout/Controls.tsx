@@ -23,7 +23,7 @@ export function LangSwitcher() {
       value={lang}
       onChange={(e) => setLang(e.target.value as typeof lang)}
       aria-label={t('common.language')}
-      className="w-auto min-w-[7.5rem]"
+      className="h-9 w-auto min-w-[7.5rem]"
     >
       {LANGS.map((l) => (
         <option key={l.code} value={l.code}>{l.label}</option>
@@ -77,7 +77,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(next[theme])}
       title={t('common.theme')}
       aria-label={t('common.theme')}
-      className="flex h-9 w-9 items-center justify-center rounded-md border
+      className="flex h-9 w-9 items-center justify-center rounded-lg border
         bg-[var(--bg)] text-sm hover:bg-[var(--bg-inset)]"
     >
       <span aria-hidden="true">{icon}</span>

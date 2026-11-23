@@ -32,8 +32,8 @@ const I = {
 
 function Icon({ d }: { d: ReactNode }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" strokeWidth="1.75"
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="1.8"
          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {d}
     </svg>
@@ -48,17 +48,25 @@ const NAV: Item[] = [
   { to: '/tolovlar',    labelKey: 'nav.billing',  icon: I.money,   badge: 'payments' },
   { to: '/murojaatlar', labelKey: 'nav.support',  icon: I.chat,    badge: 'messages' },
   { to: '/jurnal',      labelKey: 'nav.journal',  icon: I.journal },
-  { to: '/sozlamalar',  labelKey: 'nav.settings', icon: I.gear },
   { to: '/adminlar',    labelKey: 'nav.admins',   icon: I.users },
+  { to: '/sozlamalar',  labelKey: 'nav.settings', icon: I.gear },
 ];
 
+const LOGO = `${import.meta.env.BASE_URL}logo-mark.svg`;
+
+function initials(name?: string | null) {
+  return (name ?? '?').split(/s+/).filter(Boolean).slice(0, 2)
+    .map((w) => w[0]!.toUpperCase()).join('');
+}
+
+/** Uztomic Edu — platforma boshqaruvi. Maktab paneli bilan bir xil
+ *  dizayn: oq yon menyu, bitta urg'u rang, ortiqcha bezaksiz. */
 export default function AppShell() {
   const t = useT();
   const { admin, signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
-  // Menyudagi raqamlar. `platform_overview` allaqachon ikkalasini ham
-  // qaytaradi — alohida so'rov yozish shart emas.
+  // Menyudagi raqamlar. `platform_overview` ikkalasini ham qaytaradi.
   const counts = useQuery({
     queryKey: ['nav-counts'],
     queryFn: async () => {
@@ -74,28 +82,23 @@ export default function AppShell() {
   });
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
+    `flex items-center gap-2.5 rounded-[10px] px-3 py-[7px] text-[13.5px] transition-colors ${
       isActive
-        ? 'bg-brand-800 font-medium text-white'
-        : 'text-brand-200 hover:bg-brand-800/60 hover:text-white'
+        ? 'bg-[var(--sel-bg)] font-medium text-[var(--text)]'
+        : 'text-[var(--text-muted)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text)]'
     }`;
 
   const nav = (
-    <nav className="space-y-0.5">
+    <nav className="space-y-px">
       {NAV.map((item) => {
         const n = item.badge ? counts.data?.[item.badge] ?? 0 : 0;
         return (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
-            className={linkClass}
-            onClick={() => setOpen(false)}
-          >
+          <NavLink key={item.to} to={item.to} end={item.to === '/'}
+                   className={linkClass} onClick={() => setOpen(false)}>
             <Icon d={item.icon} />
-            <span className="flex-1">{t(item.labelKey)}</span>
+            <span className="flex-1 truncate">{t(item.labelKey)}</span>
             {n > 0 && (
-              <span className="rounded-full bg-[var(--danger)] px-1.5 py-0.5
+              <span className="num min-w-5 rounded-full bg-[var(--danger)] px-1.5 py-0.5 text-center
                 text-[11px] font-semibold leading-none text-white">
                 {n}
               </span>
@@ -106,63 +109,68 @@ export default function AppShell() {
     </nav>
   );
 
-  return (
-    <div className="flex min-h-full flex-col">
-      {/* Platforma paneli ekanini unutib qo'ymaslik uchun doimiy chiziq.
-          Bu ilovada har bir amal BARCHA maktablarga ta'sir qiladi. */}
-      <div className="bg-brand-950 px-4 py-1 text-center text-[11px]
-        font-medium uppercase tracking-wider text-brand-300">
-        {t('app.platformBanner')}
-      </div>
-
-      <div className="flex flex-1">
-        <aside className="hidden w-56 flex-col bg-brand-900 p-3 md:flex">
-          <div className="mb-4 px-1.5">
-            <p className="text-sm font-semibold text-white">{t('app.name')}</p>
-            <p className="text-[11px] text-brand-300">{t('app.platform')}</p>
-          </div>
-          {nav}
-          <div className="mt-auto border-t border-brand-800 pt-3">
-            <p className="px-1.5 text-[13px] font-medium text-white">
-              {admin?.full_name}
-            </p>
-            <p className="px-1.5 text-[11px] text-brand-300">{admin?.email}</p>
-            <button
-              onClick={signOut}
-              className="mt-2 w-full rounded-md px-2.5 py-1.5 text-left text-[13px]
-                text-brand-200 hover:bg-brand-800 hover:text-white"
-            >
-              {t('auth.logout')}
-            </button>
-          </div>
-        </aside>
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex items-center gap-2 border-b
-            bg-[var(--bg)] px-3 py-2 md:px-5">
-            <button
-              onClick={() => setOpen((v) => !v)}
-              className="rounded-md border p-1.5 md:hidden"
-              aria-label={t('nav.menu')}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" strokeWidth="2">
-                <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-              </svg>
-            </button>
-            <div className="flex-1" />
-            <LangSwitcher />
-            <ThemeToggle />
-          </header>
-
-          {open && (
-            <div className="border-b bg-brand-900 p-3 md:hidden">{nav}</div>
-          )}
-
-          <main className="flex-1 px-3 py-4 md:px-5 md:py-5">
-            <Outlet />
-          </main>
+  const brand = (
+    <div className="flex items-center gap-2.5">
+      <img src={LOGO} alt="" className="h-8 w-8 rounded-[9px]" width={32} height={32} />
+      <div className="min-w-0">
+        <div className="truncate text-[15px] font-semibold leading-tight tracking-tight">
+          Uztomic <span className="text-accent-600 dark:text-accent-400">Edu</span>
         </div>
+        <div className="truncate text-[12px] leading-tight text-[var(--text-faint)]">
+          {t('app.platform')}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex h-[100dvh] overflow-hidden">
+      <aside className="hidden h-full w-60 shrink-0 flex-col border-r bg-[var(--bg)] md:flex">
+        <div className="px-5 pb-5 pt-5">{brand}</div>
+        <div className="flex-1 overflow-y-auto px-3 pb-4">{nav}</div>
+        <div className="flex items-center gap-2.5 border-t px-4 py-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full
+            bg-[var(--bg-inset)] text-[12px] font-semibold">
+            {initials(admin?.full_name)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[13px] font-medium">{admin?.full_name}</div>
+            <div className="truncate text-[11.5px] text-[var(--text-faint)]">{admin?.email}</div>
+          </div>
+          <button onClick={signOut} title={t('auth.logout')} aria-label={t('auth.logout')}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-faint)]
+                    hover:bg-[var(--bg-inset)] hover:text-[var(--text)]">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-[var(--bg)] px-3 md:px-6">
+          <button onClick={() => setOpen((v) => !v)} aria-label={t('nav.menu')}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border md:hidden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+            </svg>
+          </button>
+          <div className="md:hidden">{brand}</div>
+          <div className="flex-1" />
+          <LangSwitcher />
+          <ThemeToggle />
+        </header>
+
+        {open && (
+          <div className="border-b bg-[var(--bg)] p-3 md:hidden">{nav}</div>
+        )}
+
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[var(--bg-subtle)]">
+          <div className="mx-auto max-w-[1280px] px-4 py-5 md:px-8 md:py-7">
+            <Outlet />
+          </div>
+        </main>
       </div>
 
       <IdleGuard />

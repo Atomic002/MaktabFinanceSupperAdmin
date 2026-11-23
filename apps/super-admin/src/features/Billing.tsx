@@ -122,7 +122,7 @@ export default function Billing() {
             onClick={() => setTab(k)}
             className={`rounded-md px-3 py-1.5 text-[13px] ${
               tab === k
-                ? 'bg-brand-900 font-medium text-white'
+                ? 'bg-[var(--primary)] font-medium text-[var(--on-primary)]'
                 : 'border bg-[var(--bg)] hover:bg-[var(--bg-inset)]'
             }`}
           >

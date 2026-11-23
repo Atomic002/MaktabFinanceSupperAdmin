@@ -13,13 +13,16 @@
 import {
   type ButtonHTMLAttributes,
   type ChangeEvent,
+  type ComponentPropsWithRef,
   type InputHTMLAttributes,
+  type MouseEvent,
   type ReactNode,
   type SelectHTMLAttributes,
   useEffect,
   useLayoutEffect,
   useRef,
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { money as fmtMoney } from '@/lib/format';
 import { useI18n } from '@/i18n';
 
@@ -31,13 +34,13 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'accent';
 
 const BTN: Record<ButtonVariant, string> = {
   primary:
-    'bg-brand-900 text-white hover:bg-brand-800 active:bg-brand-950 ' +
-    'disabled:bg-brand-900/40',
+    'bg-[var(--primary)] text-[var(--on-primary)] hover:bg-[var(--primary-hover)] ' +
+    'disabled:opacity-40',
   accent:
     'bg-accent-600 text-white hover:bg-accent-700 active:bg-accent-800 ' +
     'disabled:bg-accent-600/40',
   secondary:
-    'border bg-[var(--bg)] text-[var(--text)] hover:bg-[var(--bg-inset)] ' +
+    'border bg-[var(--bg)] text-[var(--text)] hover:bg-[var(--bg-subtle)] ' +
     'disabled:opacity-50',
   ghost:
     'text-[var(--text-muted)] hover:bg-[var(--bg-inset)] hover:text-[var(--text)] ' +
@@ -56,11 +59,12 @@ export function Button({
   variant?: ButtonVariant;
   size?: 'sm' | 'md';
 }) {
-  const pad = size === 'sm' ? 'h-7 px-2.5 text-[13px]' : 'h-9 px-3.5 text-sm';
+  const pad = size === 'sm' ? 'h-8 px-3 text-[13px]' : 'h-10 px-4 text-sm';
   return (
     <button
-      className={`inline-flex items-center justify-center gap-1.5 rounded-md
-        font-medium transition-colors disabled:cursor-not-allowed
+      className={`inline-flex items-center justify-center gap-1.5 rounded-[10px]
+        whitespace-nowrap font-medium transition-[background-color,color,transform] active:scale-[0.98]
+        disabled:cursor-not-allowed disabled:active:scale-100
         ${pad} ${BTN[variant]} ${className}`}
       {...rest}
     >
@@ -101,13 +105,25 @@ export function Field({
   );
 }
 
-const FIELD_BASE =
-  'w-full rounded-md border bg-[var(--bg)] px-2.5 text-sm text-[var(--text)] ' +
-  'placeholder:text-[var(--text-faint)] transition-colors ' +
-  'focus:border-brand-500 disabled:bg-[var(--bg-inset)] disabled:text-[var(--text-faint)]';
+//  Kenglik chaqiruvchidan kelsa (`w-auto`, `max-w-xs` ...) `w-full`
+//  qo'yilmaydi: ikkala sinf bir vaqtda turganda Tailwind CSS tartibi
+//  bo'yicha `w-full` yutardi va masalan kirish sahifasidagi til
+//  tanlagich butun ekran kengligiga cho'zilib ketardi.
+function fieldBase(className: string): string {
+  return /(^|\s)w-/.test(className) ? FIELD_BASE : `w-full ${FIELD_BASE}`;
+}
 
-export function Input({ className = '', ...rest }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={`${FIELD_BASE} h-9 ${className}`} {...rest} />;
+const FIELD_BASE =
+  'rounded-[10px] border bg-[var(--bg)] px-3 text-sm text-[var(--text)] ' +
+  'placeholder:text-[var(--text-faint)] transition-[border-color,box-shadow] outline-none ' +
+  'focus:border-[var(--text-muted)] focus:ring-4 focus:ring-[var(--bg-inset)] ' +
+  'disabled:bg-[var(--bg-subtle)] disabled:text-[var(--text-faint)]';
+
+//  `ref` ham qabul qilinadi: kursor holatini boshqarish kerak
+//  bo'lgan maydonlar (masalan telefon) shu orqali ishlaydi.
+//  React 19 da bu oddiy prop — `forwardRef` kerak emas.
+export function Input({ className = '', ...rest }: ComponentPropsWithRef<'input'>) {
+  return <input className={`${fieldBase(className)} h-10 ${className}`} {...rest} />;
 }
 
 /**
@@ -181,7 +197,7 @@ export function MoneyInput({
         value={display}
         onChange={handleChange}
         disabled={disabled}
-        className={`${FIELD_BASE} num h-9 pr-12 text-right ${className}`}
+        className={`${fieldBase(className)} num h-10 pr-12 text-right ${className}`}
         {...rest}
       />
       <span
@@ -199,7 +215,7 @@ export function Select({
   className = '', children, ...rest
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select className={`${FIELD_BASE} h-9 pr-8 ${className}`} {...rest}>
+    <select className={`${fieldBase(className)} h-10 pr-8 ${className}`} {...rest}>
       {children}
     </select>
   );
@@ -220,15 +236,16 @@ export function Card({
 }) {
   return (
     <section
-      className={`rounded-lg border bg-[var(--bg)] ${className}`}
+      className={`rounded-2xl border bg-[var(--bg)] ${className}`}
     >
       {(title || action) && (
-        <header className="flex items-center justify-between gap-3 border-b px-4 py-2.5">
-          <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
+        <header className="flex min-h-12 items-center justify-between gap-3 border-b
+          border-[var(--border-soft)] px-5 py-3">
+          <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">{title}</h2>
           {action}
         </header>
       )}
-      <div className={padded ? 'p-4' : ''}>{children}</div>
+      <div className={padded ? 'p-5' : ''}>{children}</div>
     </section>
   );
 }
@@ -241,16 +258,16 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
+    <header className="mb-5 flex flex-wrap items-end justify-between gap-3 md:mb-6">
+      <div className="min-w-0">
+        <h1 className="text-[22px] font-semibold tracking-tight text-[var(--text)] md:text-2xl">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">{subtitle}</p>
+          <p className="mt-1 text-[13px] text-[var(--text-muted)]">{subtitle}</p>
         )}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
 }
@@ -259,10 +276,50 @@ export function PageHeader({
 //  Jadval — zich, gorizontal siljish o'z konteynerida
 // ---------------------------------------------------------------------
 
-export function Table({ children }: { children: ReactNode }) {
+/**
+ *  Telefonda jadval kartochkalarga aylanadi.
+ *
+ *  Ilgari 43 ta jadval telefonda gorizontal suriladigan keng jadval
+ *  bo'lib qolardi: ustunlar mayda, summa ko'rinmasdi, qatorni bosish
+ *  qiyin edi. Endi har bir katakka sarlavha nomi `data-label` bilan
+ *  yoziladi va CSS (`.rtable`) tor ekranda har qatorni "yorliq — qiymat"
+ *  ko'rinishidagi kartochka qilib chizadi. Katta ekranda hech narsa
+ *  o'zgarmaydi.
+ *
+ *  Yorliqlar DOM dan olinadi — 43 ta jadvalning har birini qayta
+ *  yozish shart emas, yangi ustun qo'shilsa ham o'zi ishlaydi.
+ */
+export function Table({ children, stack = true }: { children: ReactNode; stack?: boolean }) {
+  const ref = useRef<HTMLTableElement | null>(null);
+
+  useEffect(() => {
+    const table = ref.current;
+    if (!table || !stack) return;
+    const label = () => {
+      const heads = Array.from(table.querySelectorAll('thead th')).map(
+        (th) => (th.textContent ?? '').trim(),
+      );
+      table.querySelectorAll('tbody tr').forEach((tr) => {
+        let col = 0;
+        Array.from(tr.children).forEach((cell) => {
+          const td = cell as HTMLTableCellElement;
+          const text = heads[col] ?? '';
+          if (td.getAttribute('data-label') !== text) td.setAttribute('data-label', text);
+          col += td.colSpan || 1;
+        });
+      });
+    };
+    label();
+    const obs = new MutationObserver(label);
+    obs.observe(table, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, [stack]);
+
   return (
     <div className="table-scroll">
-      <table className="w-full border-collapse text-sm">{children}</table>
+      <table ref={ref} className={`w-full border-collapse text-sm ${stack ? 'rtable' : ''}`}>
+        {children}
+      </table>
     </div>
   );
 }
@@ -276,9 +333,9 @@ export function Th({
 }) {
   return (
     <th
-      className={`sticky top-0 z-10 whitespace-nowrap border-b bg-[var(--bg-subtle)]
-        px-3 py-2 text-${align} text-xs font-semibold uppercase tracking-wide
-        text-[var(--text-muted)] ${className}`}
+      className={`sticky top-0 z-10 whitespace-nowrap border-b bg-[var(--bg)]
+        px-4 py-2.5 text-${align} text-[12px] font-medium
+        text-[var(--text-faint)] ${className}`}
     >
       {children}
     </th>
@@ -297,7 +354,7 @@ export function Td({
   return (
     <td
       colSpan={colSpan}
-      className={`border-b border-[var(--border-soft)] px-3 py-1.5 text-${align}
+      className={`border-b border-[var(--border-soft)] px-4 py-2.5 text-${align}
         ${mono ? 'num' : ''} ${className}`}
     >
       {children}
@@ -306,16 +363,27 @@ export function Td({
 }
 
 export function Tr({
-  children, onClick, className = '',
+  children, onClick, to, className = '',
 }: {
   children: ReactNode;
   onClick?: () => void;
+  /** Qatorning istalgan joyini bossa — shu sahifa ochiladi. Ichidagi
+   *  tugma, havola va maydonlar o'z ishini qiladi (qatorga o'tmaydi). */
+  to?: string;
   className?: string;
 }) {
+  const navigate = useNavigate();
+  const go = to
+    ? (e: MouseEvent<HTMLTableRowElement>) => {
+        if ((e.target as HTMLElement).closest('a,button,input,select,textarea,label')) return;
+        if (e.ctrlKey || e.metaKey) window.open(to, '_blank');
+        else navigate(to);
+      }
+    : onClick;
   return (
     <tr
-      onClick={onClick}
-      className={`${onClick ? 'cursor-pointer' : ''}
+      onClick={go}
+      className={`${go ? 'cursor-pointer' : ''}
         hover:bg-[var(--bg-subtle)] ${className}`}
     >
       {children}
@@ -363,7 +431,7 @@ const TONE: Record<Tone, string> = {
   ok: 'bg-[var(--ok-bg)] text-[var(--ok)]',
   warn: 'bg-[var(--warn-bg)] text-[var(--warn)]',
   danger: 'bg-[var(--danger-bg)] text-[var(--danger)]',
-  brand: 'bg-brand-100 text-brand-800',
+  brand: 'bg-[var(--bg-inset)] text-[var(--text)]',
 };
 
 export function Badge({
@@ -374,8 +442,8 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs
-        font-medium ${TONE[tone]}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5
+        text-[11.5px] font-medium ${TONE[tone]}`}
     >
       {children}
     </span>
@@ -453,7 +521,7 @@ export function Notice({
 }) {
   return (
     <div
-      className={`rounded-md px-3 py-2 text-[13px] ${TONE[tone]}`}
+      className={`rounded-xl px-4 py-3 text-[13px] leading-relaxed ${TONE[tone]}`}
       role="status"
     >
       {children}
@@ -489,20 +557,20 @@ export function Modal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto
-        bg-black/40 p-4 pt-[8vh]"
+        bg-black/40 p-4 pt-[8vh] backdrop-blur-[2px]"
       onClick={onClose}
       role="presentation"
     >
       <div
-        className={`w-full rounded-lg border bg-[var(--bg)] shadow-xl
+        className={`w-full rounded-2xl border bg-[var(--bg)] shadow-[var(--shadow-pop)]
           ${wide ? 'max-w-3xl' : 'max-w-lg'}`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label={title}
       >
-        <header className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">{title}</h2>
+        <header className="flex items-center justify-between px-5 pb-1 pt-4">
+          <h2 className="text-base font-semibold tracking-tight">{title}</h2>
           <button
             onClick={onClose}
             className="rounded p-1 text-[var(--text-faint)] hover:bg-[var(--bg-inset)]
@@ -515,13 +583,102 @@ export function Modal({
             </svg>
           </button>
         </header>
-        <div className="p-4">{children}</div>
+        <div className="px-5 py-4">{children}</div>
         {footer && (
-          <footer className="flex justify-end gap-2 border-t px-4 py-3">
+          <footer className="flex flex-wrap justify-end gap-2 border-t border-[var(--border-soft)] px-5 py-3.5">
             {footer}
           </footer>
         )}
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------
+//  Ko'rsatkich kartasi — bosh sahifa va hisobotlarda bir xil ko'rinish.
+//  Bitta asosiy raqam, bitta qisqa izoh. Ortiqcha matn yo'q.
+// ---------------------------------------------------------------------
+
+export function Stat({
+  label, value, hint, tone = 'neutral', delta, invertDelta, children,
+}: {
+  label: ReactNode;
+  value: ReactNode;
+  hint?: ReactNode;
+  tone?: 'neutral' | 'ok' | 'danger' | 'warn';
+  /** Oldingi davrga nisbatan foiz. null — taqqoslash yo'q. */
+  delta?: number | null;
+  /** Xarajat uchun: o'sish YOMON, rang teskari. */
+  invertDelta?: boolean;
+  children?: ReactNode;
+}) {
+  const color = tone === 'ok' ? 'text-[var(--ok)]'
+    : tone === 'danger' ? 'text-[var(--danger)]'
+    : tone === 'warn' ? 'text-[var(--warn)]'
+    : 'text-[var(--text)]';
+  const good = delta === null || delta === undefined
+    ? null : invertDelta ? delta <= 0 : delta >= 0;
+  return (
+    <div className="flex min-w-0 flex-col rounded-2xl border bg-[var(--bg)] p-4 md:p-5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-[13px] text-[var(--text-muted)]">{label}</span>
+        {delta !== null && delta !== undefined && (
+          <span className={`num shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-medium
+            ${good ? 'bg-[var(--ok-bg)] text-[var(--ok)]' : 'bg-[var(--danger-bg)] text-[var(--danger)]'}`}>
+            {delta > 0 ? '+' : delta < 0 ? '−' : ''}{Math.abs(delta)}%
+          </span>
+        )}
+      </div>
+      <div className={`num mt-2 truncate text-[22px] font-semibold leading-tight tracking-tight
+        md:text-[24px] ${color}`}>
+        {value}
+      </div>
+      {hint && <div className="mt-1 truncate text-[12px] text-[var(--text-faint)]">{hint}</div>}
+      {children}
+    </div>
+  );
+}
+
+/** Ingichka foiz chizig'i. */
+export function Progress({ value, tone }: {
+  value: number;
+  tone?: 'ok' | 'warn' | 'danger' | 'neutral';
+}) {
+  const v = Math.min(100, Math.max(0, value));
+  const tn = tone ?? (v >= 80 ? 'ok' : v >= 50 ? 'warn' : 'danger');
+  const bar = tn === 'ok' ? 'bg-[var(--ok)]' : tn === 'warn' ? 'bg-[var(--warn)]'
+    : tn === 'danger' ? 'bg-[var(--danger)]' : 'bg-[var(--text)]';
+  return (
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--bg-inset)]">
+      <div className={`h-full rounded-full ${bar} transition-[width] duration-500`}
+           style={{ width: `${v}%` }} />
+    </div>
+  );
+}
+
+/** Segmentli tanlagich — filtr chiplari o'rniga, bitta qatorda. */
+export function Segmented<T extends string>({
+  value, onChange, options,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: Array<{ value: T; label: ReactNode }>;
+}) {
+  return (
+    <div className="inline-flex max-w-full overflow-x-auto rounded-[10px] bg-[var(--bg-inset)] p-0.5">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={`flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3
+            text-[13px] transition-colors ${value === o.value
+              ? 'bg-[var(--bg)] font-medium text-[var(--text)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }

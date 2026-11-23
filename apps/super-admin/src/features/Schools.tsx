@@ -12,7 +12,7 @@
 // =====================================================================
 
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useI18n, useT } from '@/i18n';
@@ -81,7 +81,9 @@ export default function Schools() {
   const t = useT();
   const { lang } = useI18n();
   const [q, setQ] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
+  //  Bosh sahifadagi havola filtr bilan keladi: /maktablar?f=overdue
+  const [params] = useSearchParams();
+  const [filter, setFilter] = useState<Filter>(() => (params.get('f') as Filter | null) ?? 'all');
   const sort = useSort<string>('name');
 
   const rows = useQuery({

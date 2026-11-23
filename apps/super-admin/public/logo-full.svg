@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" role="img" aria-label="Uztomic Edu"><svg x="40" y="40" width="240" height="240" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Uztomic Edu">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B1F27"/><stop offset="1" stop-color="#0B0D11"/></linearGradient></defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<g transform="translate(256 256) scale(1) translate(-256 -256)"><path d="M160 236 V306 a96 96 0 0 0 192 0 V236" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+   <path d="M256 104 L396 162 L256 220 L116 162 Z" fill="#4ADE80"/>
+   <path d="M396 162 V226" stroke="#4ADE80" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+</svg>
+<text x="320" y="176" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="112" font-weight="800" letter-spacing="-3" fill="#0B0D11">Uztomic <tspan fill="#359F5C">Edu</tspan></text>
+<text x="326" y="236" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="30" font-weight="600" letter-spacing="5" fill="#4B5563">BOG'CHA · MAKTAB · O'QUV MARKAZI</text>
+</svg>

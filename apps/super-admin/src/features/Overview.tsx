@@ -1,10 +1,10 @@
 // =====================================================================
 //  Platforma ko'rsatkichlari (TZ E7).
 //
-//  Bu ekran bitta savolga javob beradi: "bugun nima qilishim kerak".
-//  Shuning uchun eng tepada KUTAYOTGAN ISHLAR turadi — tasdiqlanmagan
-//  chek va o'qilmagan xabar. Umumiy statistika undan pastda: u
-//  qiziqarli, lekin shoshilinch emas.
+//  Bitta savol: "bugun nima qilishim kerak va platforma qanday?".
+//  Tepada — kutayotgan ishlar (faqat bor bo'lsa), keyin to'rtta asosiy
+//  raqam, maktablar holati bitta chiziqda va 12 oylik daromad grafigi.
+//  Jadval va izoh matnlari yo'q — raqamning o'zi gapiradi.
 // =====================================================================
 
 import { Link } from 'react-router-dom';
@@ -12,32 +12,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useI18n, useT } from '@/i18n';
 import { money } from '@/lib/format';
-import {
-  Badge, Button, Card, ErrorState, Loading, Money, Notice,
-  PageHeader, Table, Td, Th, Tr,
-} from '@/ui';
+import { Button, Card, ErrorState, Loading, PageHeader, Stat } from '@/ui';
 
-/** Katta raqam + izoh. Buxgalter jadvalidan farqli — bu ko'rinish. */
-function Stat({ label, value, tone, hint }: {
-  label: string;
-  value: string;
-  tone?: 'ok' | 'warn' | 'danger';
-  hint?: string;
-}) {
-  const color = tone === 'danger' ? 'text-[var(--danger)]'
-    : tone === 'warn' ? 'text-[var(--warn)]'
-    : tone === 'ok' ? 'text-[var(--ok)]'
-    : 'text-[var(--text)]';
-  return (
-    <div className="rounded-lg border bg-[var(--bg)] px-3 py-2.5">
-      <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
-        {label}
-      </p>
-      <p className={`num mt-0.5 text-xl font-semibold ${color}`}>{value}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-[var(--text-faint)]">{hint}</p>}
-    </div>
-  );
-}
+const MONTHS: Record<string, string[]> = {
+  uz: ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'],
+  'uz-cyrl': ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+  ru: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+};
 
 export default function Overview() {
   const t = useT();
@@ -70,151 +51,123 @@ export default function Overview() {
   const o = overview.data;
   if (!o) return <ErrorState message={t('common.error')} />;
 
-  const rows = revenue.data ?? [];
-  // Grafik uchun eng katta qiymat — ustunlar shunga nisbatan.
+  const rows = [...(revenue.data ?? [])]
+    .sort((a, b) => String(a.period).localeCompare(String(b.period)));
   const peak = Math.max(1, ...rows.map((r) => Number(r.issued ?? 0)));
+
+  const tasks = [
+    { n: o.pending_payments, to: '/tolovlar', label: t('overview.pendingPayments'), tone: 'warn' },
+    { n: o.unread_threads, to: '/murojaatlar', label: t('overview.unreadThreads'), tone: 'brand' },
+    { n: o.overdue_schools, to: '/maktablar?f=overdue', label: t('overview.overdueSchools'), tone: 'danger' },
+  ].filter((x) => Number(x.n) > 0);
+
+  const status = [
+    { key: 'trial', n: Number(o.schools_trial), color: 'bg-sky-500' },
+    { key: 'active', n: Number(o.schools_active), color: 'bg-accent-500' },
+    { key: 'restricted', n: Number(o.schools_restricted), color: 'bg-[var(--danger)]' },
+    { key: 'archived', n: Number(o.schools_archived), color: 'bg-[var(--text-faint)]' },
+  ];
+  const statusTotal = Math.max(1, status.reduce((a, s) => a + s.n, 0));
 
   return (
     <>
-      <PageHeader title={t('overview.title')} subtitle={t('overview.subtitle')} />
+      <PageHeader
+        title={t('overview.title')}
+        actions={
+          <Link to="/maktablar/yangi">
+            <Button variant="primary">+ {t('schools.add')}</Button>
+          </Link>
+        }
+      />
 
-      {/* --- Kutayotgan ishlar. Eng tepada, chunki bu — bugungi ish --- */}
-      {(o.pending_payments > 0 || o.unread_threads > 0 || o.overdue_schools > 0) && (
-        <div className="mb-4 grid gap-2 sm:grid-cols-3">
-          {o.pending_payments > 0 && (
-            <Link to="/tolovlar">
-              <Notice tone="warn">
-                <span className="font-semibold">{o.pending_payments}</span>
-                {' '}{t('overview.pendingPayments')}
-              </Notice>
+      {/* --- Kutayotgan ishlar — faqat bor bo'lsa ------------------ */}
+      {tasks.length > 0 && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          {tasks.map((x) => (
+            <Link key={x.to} to={x.to}
+                  className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px]
+                    hover:bg-[var(--bg-inset)] ${
+                    x.tone === 'danger' ? 'border-[var(--danger)] text-[var(--danger)]'
+                    : x.tone === 'warn' ? 'border-[var(--warn)] text-[var(--warn)]'
+                    : 'bg-[var(--bg)]'}`}>
+              <span className="num font-semibold">{x.n}</span>
+              {x.label}
+              <span aria-hidden="true">→</span>
             </Link>
-          )}
-          {o.unread_threads > 0 && (
-            <Link to="/murojaatlar">
-              <Notice tone="brand">
-                <span className="font-semibold">{o.unread_threads}</span>
-                {' '}{t('overview.unreadThreads')}
-              </Notice>
-            </Link>
-          )}
-          {o.overdue_schools > 0 && (
-            <Link to="/maktablar">
-              <Notice tone="danger">
-                <span className="font-semibold">{o.overdue_schools}</span>
-                {' '}{t('overview.overdueSchools')}
-              </Notice>
-            </Link>
-          )}
+          ))}
         </div>
       )}
 
-      {/* --- Pul --------------------------------------------------- */}
-      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat
-          label={t('overview.mrr')}
-          value={money(o.mrr, lang)}
-          tone="ok"
-          hint={t('overview.mrrHint')}
-        />
-        <Stat
-          label={t('overview.unpaid')}
-          value={money(o.unpaid_amount, lang)}
-          tone={Number(o.unpaid_amount) > 0 ? 'danger' : undefined}
-          hint={t('overview.unpaidHint', { count: o.unpaid_invoices })}
-        />
-        <Stat
-          label={t('overview.schoolsPaying')}
-          value={String(o.schools_active)}
-          hint={t('overview.ofTotal', { total: o.schools_total })}
-        />
-        <Stat
-          label={t('overview.newSchools')}
-          value={String(o.new_schools_30d)}
-          hint={t('overview.last30')}
-        />
+      {/* --- Asosiy raqamlar --------------------------------------- */}
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label={t('overview.mrr')} value={money(o.mrr, lang)} tone="ok"
+              hint={t('overview.mrrHint')} />
+        <Stat label={t('overview.unpaid')} value={money(o.unpaid_amount, lang)}
+              tone={Number(o.unpaid_amount) > 0 ? 'danger' : 'neutral'}
+              hint={t('overview.unpaidHint', { count: o.unpaid_invoices })} />
+        <Stat label={t('overview.schoolsPaying')} value={String(o.schools_active)}
+              hint={`${t('overview.ofTotal', { total: o.schools_total })} · +${o.new_schools_30d} ${t('overview.last30')}`} />
+        <Stat label={t('overview.students')} value={money(o.students_total, lang)}
+              hint={`${t('overview.branches')}: ${o.branches_total} · ${t('overview.users')}: ${o.users_total}`} />
       </div>
 
-      {/* --- Maktablar holati bo'yicha ------------------------------ */}
-      <Card title={t('overview.byStatus')} className="mb-4">
-        <div className="flex flex-wrap gap-2">
-          <Badge tone="brand">{t('status.trial')}: {o.schools_trial}</Badge>
-          <Badge tone="ok">{t('status.active')}: {o.schools_active}</Badge>
-          <Badge tone="danger">{t('status.restricted')}: {o.schools_restricted}</Badge>
-          <Badge>{t('status.archived')}: {o.schools_archived}</Badge>
-        </div>
-      </Card>
-
-      {/* --- Tizim yuki --------------------------------------------- */}
-      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label={t('overview.students')} value={String(o.students_total)} />
-        <Stat label={t('overview.branches')} value={String(o.branches_total)} />
-        <Stat label={t('overview.users')} value={String(o.users_total)} />
-        <Stat
-          label={t('overview.failedMessages')}
-          value={String(o.failed_messages)}
-          tone={o.failed_messages > 0 ? 'warn' : undefined}
-          hint={t('overview.failedHint')}
-        />
-      </div>
-
-      {/* --- Daromad dinamikasi -------------------------------------- */}
-      <Card title={t('overview.revenue')} padded={false}>
-        {revenue.isLoading ? <Loading /> : (
-          <Table>
-            <thead>
-              <tr>
-                <Th>{t('overview.month')}</Th>
-                <Th align="right">{t('overview.issued')}</Th>
-                <Th align="right">{t('overview.collected')}</Th>
-                <Th align="right">{t('overview.invoices')}</Th>
-                {/* Oddiy ustunli grafik — kutubxonasiz. Nisbat ko'rinsa
-                    yetarli, aniq raqam yonidagi ustunda turibdi. */}
-                <Th className="w-40">{t('overview.chart')}</Th>
-              </tr>
-            </thead>
-            <tbody>
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* --- Daromad: 12 oy ------------------------------------- */}
+        <Card title={t('overview.revenue')} className="lg:col-span-2">
+          {revenue.isLoading ? <Loading /> : rows.length === 0 ? (
+            <div className="py-10 text-center text-[13px] text-[var(--text-faint)]">—</div>
+          ) : (
+            <div className="flex h-56 items-end gap-1.5 pt-6">
               {rows.map((r) => {
                 const issued = Number(r.issued ?? 0);
                 const collected = Number(r.collected ?? 0);
+                const m = Number(String(r.period).slice(5, 7)) - 1;
                 return (
-                  <Tr key={String(r.period)}>
-                    <Td mono>{String(r.period).slice(0, 7)}</Td>
-                    <Td align="right"><Money value={issued} /></Td>
-                    <Td align="right">
-                      <span className={collected < issued
-                        ? 'text-[var(--warn)]' : 'text-[var(--ok)]'}>
-                        <Money value={collected} />
-                      </span>
-                    </Td>
-                    <Td align="right" mono>{r.invoices}</Td>
-                    <Td>
-                      <span className="flex h-3 w-full overflow-hidden rounded-sm
-                        bg-[var(--bg-inset)]" title={`${money(collected, lang)} / ${money(issued, lang)}`}>
-                        <span
-                          className="bg-accent-500"
-                          style={{ width: `${Math.round((collected / peak) * 100)}%` }}
-                        />
-                        <span
-                          className="bg-[var(--border)]"
-                          style={{ width: `${Math.round(((issued - collected) / peak) * 100)}%` }}
-                        />
-                      </span>
-                    </Td>
-                  </Tr>
+                  <div key={String(r.period)} className="group relative flex h-full flex-1 flex-col justify-end">
+                    <div className="pointer-events-none absolute -top-1 left-1/2 z-10 hidden -translate-x-1/2
+                      -translate-y-full whitespace-nowrap rounded-lg border bg-[var(--bg)] px-2.5 py-1.5
+                      text-[12px] shadow-[var(--shadow-pop)] group-hover:block">
+                      <div className="num font-semibold text-[var(--ok)]">{money(collected, lang)}</div>
+                      <div className="num text-[var(--text-faint)]">/ {money(issued, lang)}</div>
+                    </div>
+                    <div className="relative w-full overflow-hidden rounded-t-md bg-[var(--bg-inset)]"
+                         style={{ height: `${Math.max(2, (issued / peak) * 100)}%` }}>
+                      <div className="absolute inset-x-0 bottom-0 bg-accent-500"
+                           style={{ height: issued > 0 ? `${Math.min(100, (collected / issued) * 100)}%` : '0%' }} />
+                    </div>
+                    <div className="mt-1.5 text-center text-[11px] text-[var(--text-faint)]">
+                      {(MONTHS[lang] ?? MONTHS.uz)[m]}
+                    </div>
+                  </div>
                 );
               })}
-            </tbody>
-          </Table>
-        )}
-      </Card>
+            </div>
+          )}
+        </Card>
 
-      <div className="mt-4 flex gap-2">
-        <Link to="/maktablar/yangi">
-          <Button variant="primary">{t('schools.add')}</Button>
-        </Link>
-        <Link to="/maktablar">
-          <Button>{t('nav.schools')}</Button>
-        </Link>
+        {/* --- Maktablar holati ----------------------------------- */}
+        <Card title={t('overview.byStatus')}>
+          <div className="mb-4 flex h-2.5 overflow-hidden rounded-full bg-[var(--bg-inset)]">
+            {status.map((s) => s.n > 0 && (
+              <div key={s.key} className={s.color} style={{ width: `${(s.n / statusTotal) * 100}%` }} />
+            ))}
+          </div>
+          <div className="space-y-2.5">
+            {status.map((s) => (
+              <Link key={s.key} to={s.key === 'trial' || s.key === 'restricted' ? `/maktablar?f=${s.key}` : '/maktablar'}
+                    className="flex items-center gap-2.5 text-[13.5px] hover:underline">
+                <span className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
+                <span className="flex-1 text-[var(--text-muted)]">{t(`status.${s.key}`)}</span>
+                <span className="num font-semibold">{s.n}</span>
+              </Link>
+            ))}
+          </div>
+          {Number(o.failed_messages) > 0 && (
+            <div className="mt-4 border-t pt-3 text-[12.5px] text-[var(--warn)]">
+              {t('overview.failedMessages')}: <span className="num font-semibold">{o.failed_messages}</span>
+            </div>
+          )}
+        </Card>
       </div>
     </>
   );

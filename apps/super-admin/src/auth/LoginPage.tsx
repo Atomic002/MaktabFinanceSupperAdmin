@@ -58,13 +58,15 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-full items-center justify-center bg-[var(--bg-subtle)] p-4">
-      <div className="w-full max-w-sm rounded-lg border bg-[var(--bg)] p-6 shadow-sm">
-        <header className="mb-5 text-center">
-          <h1 className="text-lg font-semibold text-[var(--text)]">
-            {t('app.name')}
+      <div className="w-full max-w-[380px] rounded-2xl border bg-[var(--bg)] p-7 shadow-[var(--shadow-pop)]">
+        <header className="mb-6 flex flex-col items-center text-center">
+          <img src={`${import.meta.env.BASE_URL}logo-mark.svg`} alt="" width={48} height={48}
+               className="mb-3 h-12 w-12 rounded-[13px]" />
+          <h1 className="text-[20px] font-semibold tracking-tight text-[var(--text)]">
+            Uztomic <span className="text-accent-600 dark:text-accent-400">Edu</span>
           </h1>
           <p className="mt-1 text-[13px] text-[var(--text-muted)]">
-            {t('app.tagline')}
+            {t('app.platform')}
           </p>
         </header>
 
