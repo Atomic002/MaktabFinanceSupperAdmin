@@ -31,6 +31,9 @@ const PRICE_KEYS = [
   'billing.students_per_branch',
   'billing.student_step',
   'billing.student_step_price',
+  'billing.purchase_usd',
+  'billing.server_yearly_usd',
+  'billing.usd_rate',
 ] as const;
 
 //  Bloklash zinapoyasi (TZ 2.4). `invoice_lead_days` 50-migratsiyada

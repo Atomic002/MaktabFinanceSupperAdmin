@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -20,6 +20,7 @@ export type Database = {
           deducts: boolean
           id: string
           is_active: boolean
+          is_late: boolean
           name: string
           school_id: string
           sort_order: number
@@ -29,6 +30,7 @@ export type Database = {
           deducts?: boolean
           id?: string
           is_active?: boolean
+          is_late?: boolean
           name: string
           school_id: string
           sort_order?: number
@@ -38,6 +40,7 @@ export type Database = {
           deducts?: boolean
           id?: string
           is_active?: boolean
+          is_late?: boolean
           name?: string
           school_id?: string
           sort_order?: number
@@ -787,6 +790,7 @@ export type Database = {
           billing_months: number
           created_at: string
           discount_kind: Database["public"]["Enums"]["discount_kind"] | null
+          discount_reason: string | null
           discount_type_id: string | null
           discount_value: number | null
           due_day: number
@@ -800,12 +804,14 @@ export type Database = {
           starts_on: string
           student_id: string
           tuition_amount: number
+          tuition_plan_id: string | null
           updated_at: string
         }
         Insert: {
           billing_months?: number
           created_at?: string
           discount_kind?: Database["public"]["Enums"]["discount_kind"] | null
+          discount_reason?: string | null
           discount_type_id?: string | null
           discount_value?: number | null
           due_day?: number
@@ -819,12 +825,14 @@ export type Database = {
           starts_on: string
           student_id: string
           tuition_amount?: number
+          tuition_plan_id?: string | null
           updated_at?: string
         }
         Update: {
           billing_months?: number
           created_at?: string
           discount_kind?: Database["public"]["Enums"]["discount_kind"] | null
+          discount_reason?: string | null
           discount_type_id?: string | null
           discount_value?: number | null
           due_day?: number
@@ -838,6 +846,7 @@ export type Database = {
           starts_on?: string
           student_id?: string
           tuition_amount?: number
+          tuition_plan_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -869,6 +878,13 @@ export type Database = {
             referencedRelation: "v_student_balances"
             referencedColumns: ["student_id"]
           },
+          {
+            foreignKeyName: "contracts_tuition_plan_id_fkey"
+            columns: ["tuition_plan_id"]
+            isOneToOne: false
+            referencedRelation: "tuition_plans"
+            referencedColumns: ["id"]
+          },
         ]
       }
       counters: {
@@ -893,6 +909,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "counters_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          color: string | null
+          created_at: string
+          default_price: number | null
+          deleted_at: string | null
+          duration_months: number | null
+          id: string
+          is_active: boolean
+          lesson_minutes: number | null
+          level: string | null
+          name: string
+          note: string | null
+          school_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          default_price?: number | null
+          deleted_at?: string | null
+          duration_months?: number | null
+          id?: string
+          is_active?: boolean
+          lesson_minutes?: number | null
+          level?: string | null
+          name: string
+          note?: string | null
+          school_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          default_price?: number | null
+          deleted_at?: string | null
+          duration_months?: number | null
+          id?: string
+          is_active?: boolean
+          lesson_minutes?: number | null
+          level?: string | null
+          name?: string
+          note?: string | null
+          school_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
@@ -1085,6 +1157,268 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_freezes: {
+        Row: {
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          from_on: string
+          id: string
+          member_id: string
+          reason: string | null
+          school_id: string
+          to_on: string | null
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          from_on: string
+          id?: string
+          member_id: string
+          reason?: string | null
+          school_id: string
+          to_on?: string | null
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          from_on?: string
+          id?: string
+          member_id?: string
+          reason?: string | null
+          school_id?: string
+          to_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_freezes_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_freezes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_freezes_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "group_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_freezes_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_members: {
+        Row: {
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          group_id: string
+          id: string
+          joined_on: string
+          left_on: string | null
+          left_reason: string | null
+          note: string | null
+          school_id: string
+          status: string
+          student_id: string
+          trial_on: string | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          group_id: string
+          id?: string
+          joined_on?: string
+          left_on?: string | null
+          left_reason?: string | null
+          note?: string | null
+          school_id: string
+          status?: string
+          student_id: string
+          trial_on?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          group_id?: string
+          id?: string
+          joined_on?: string
+          left_on?: string | null
+          left_reason?: string | null
+          note?: string | null
+          school_id?: string
+          status?: string
+          student_id?: string
+          trial_on?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_balances"
+            referencedColumns: ["student_id"]
+          },
+        ]
+      }
+      group_sessions: {
+        Row: {
+          branch_id: string
+          cancel_reason: string | null
+          created_at: string
+          day: string
+          end_time: string | null
+          group_id: string
+          homework: string | null
+          id: string
+          marked_at: string | null
+          marked_by: string | null
+          room_id: string | null
+          school_id: string
+          start_time: string | null
+          status: string
+          teacher_id: string | null
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          cancel_reason?: string | null
+          created_at?: string
+          day: string
+          end_time?: string | null
+          group_id: string
+          homework?: string | null
+          id?: string
+          marked_at?: string | null
+          marked_by?: string | null
+          room_id?: string | null
+          school_id: string
+          start_time?: string | null
+          status?: string
+          teacher_id?: string | null
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          cancel_reason?: string | null
+          created_at?: string
+          day?: string
+          end_time?: string | null
+          group_id?: string
+          homework?: string | null
+          id?: string
+          marked_at?: string | null
+          marked_by?: string | null
+          room_id?: string | null
+          school_id?: string
+          start_time?: string | null
+          status?: string
+          teacher_id?: string | null
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_sessions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_marked_by_fkey"
+            columns: ["marked_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -1419,10 +1753,13 @@ export type Database = {
         Row: {
           assigned_to: string | null
           branch_id: string
+          course_id: string | null
           created_at: string
           created_by: string | null
           full_name: string
+          group_id: string | null
           id: string
+          lost_reason: string | null
           next_contact_on: string | null
           note: string | null
           phone: string
@@ -1431,15 +1768,19 @@ export type Database = {
           status: Database["public"]["Enums"]["lead_status"]
           student_id: string | null
           target_class: string | null
+          trial_on: string | null
           updated_at: string
         }
         Insert: {
           assigned_to?: string | null
           branch_id: string
+          course_id?: string | null
           created_at?: string
           created_by?: string | null
           full_name: string
+          group_id?: string | null
           id?: string
+          lost_reason?: string | null
           next_contact_on?: string | null
           note?: string | null
           phone: string
@@ -1448,15 +1789,19 @@ export type Database = {
           status?: Database["public"]["Enums"]["lead_status"]
           student_id?: string | null
           target_class?: string | null
+          trial_on?: string | null
           updated_at?: string
         }
         Update: {
           assigned_to?: string | null
           branch_id?: string
+          course_id?: string | null
           created_at?: string
           created_by?: string | null
           full_name?: string
+          group_id?: string | null
           id?: string
+          lost_reason?: string | null
           next_contact_on?: string | null
           note?: string | null
           phone?: string
@@ -1465,6 +1810,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["lead_status"]
           student_id?: string | null
           target_class?: string | null
+          trial_on?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1483,10 +1829,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "leads_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "leads_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
             referencedColumns: ["id"]
           },
           {
@@ -1519,6 +1879,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           day: string
+          deleted_at: string | null
+          deleted_reason: string | null
           hours: number
           id: string
           kind: Database["public"]["Enums"]["lesson_kind"]
@@ -1534,6 +1896,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           day: string
+          deleted_at?: string | null
+          deleted_reason?: string | null
           hours?: number
           id?: string
           kind?: Database["public"]["Enums"]["lesson_kind"]
@@ -1549,6 +1913,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           day?: string
+          deleted_at?: string | null
+          deleted_reason?: string | null
           hours?: number
           id?: string
           kind?: Database["public"]["Enums"]["lesson_kind"]
@@ -1731,6 +2097,7 @@ export type Database = {
           id: string
           is_active: boolean
           lang: string
+          notify: boolean
           phone: string
           school_id: string
           telegram_id: number | null
@@ -1743,6 +2110,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           lang?: string
+          notify?: boolean
           phone: string
           school_id: string
           telegram_id?: number | null
@@ -1755,6 +2123,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           lang?: string
+          notify?: boolean
           phone?: string
           school_id?: string
           telegram_id?: number | null
@@ -1939,6 +2308,7 @@ export type Database = {
           note: string | null
           paid_on: string
           school_id: string
+          split_group_id: string | null
           status: Database["public"]["Enums"]["payment_status"]
           student_id: string
           updated_at: string
@@ -1957,6 +2327,7 @@ export type Database = {
           note?: string | null
           paid_on?: string
           school_id: string
+          split_group_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           student_id: string
           updated_at?: string
@@ -1975,6 +2346,7 @@ export type Database = {
           note?: string | null
           paid_on?: string
           school_id?: string
+          split_group_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           student_id?: string
           updated_at?: string
@@ -2409,6 +2781,60 @@ export type Database = {
           },
         ]
       }
+      rooms: {
+        Row: {
+          branch_id: string
+          capacity: number | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          note: string | null
+          school_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          capacity?: number | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          note?: string | null
+          school_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          capacity?: number | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          note?: string | null
+          school_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rooms_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       school_settings: {
         Row: {
           key: string
@@ -2453,6 +2879,7 @@ export type Database = {
       }
       school_subscriptions: {
         Row: {
+          billing_model: string
           created_at: string
           id: string
           last_paid_at: string | null
@@ -2466,6 +2893,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_model?: string
           created_at?: string
           id?: string
           last_paid_at?: string | null
@@ -2479,6 +2907,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_model?: string
           created_at?: string
           id?: string
           last_paid_at?: string | null
@@ -2519,6 +2948,7 @@ export type Database = {
           id: string
           legal_name: string | null
           name: string
+          org_type: string
           phone: string | null
           status: Database["public"]["Enums"]["school_status"]
           tax_id: string | null
@@ -2535,6 +2965,7 @@ export type Database = {
           id?: string
           legal_name?: string | null
           name: string
+          org_type?: string
           phone?: string | null
           status?: Database["public"]["Enums"]["school_status"]
           tax_id?: string | null
@@ -2551,6 +2982,7 @@ export type Database = {
           id?: string
           legal_name?: string | null
           name?: string
+          org_type?: string
           phone?: string | null
           status?: Database["public"]["Enums"]["school_status"]
           tax_id?: string | null
@@ -2671,6 +3103,78 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_attendance: {
+        Row: {
+          branch_id: string
+          comment: string | null
+          created_at: string
+          grade: number | null
+          school_id: string
+          session_id: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          comment?: string | null
+          created_at?: string
+          grade?: number | null
+          school_id: string
+          session_id: string
+          status: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          comment?: string | null
+          created_at?: string
+          grade?: number | null
+          school_id?: string
+          session_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_attendance_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "group_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "v_student_balances"
+            referencedColumns: ["student_id"]
           },
         ]
       }
@@ -2870,6 +3374,124 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_groups: {
+        Row: {
+          branch_id: string
+          capacity: number | null
+          course_id: string | null
+          created_at: string
+          days: number[]
+          deleted_at: string | null
+          end_time: string | null
+          ends_on: string | null
+          id: string
+          is_online: boolean
+          name: string
+          note: string | null
+          room_id: string | null
+          school_id: string
+          service_id: string | null
+          start_time: string | null
+          starts_on: string
+          status: string
+          teacher_id: string | null
+          teacher_pay_kind: string | null
+          teacher_pay_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          capacity?: number | null
+          course_id?: string | null
+          created_at?: string
+          days?: number[]
+          deleted_at?: string | null
+          end_time?: string | null
+          ends_on?: string | null
+          id?: string
+          is_online?: boolean
+          name: string
+          note?: string | null
+          room_id?: string | null
+          school_id: string
+          service_id?: string | null
+          start_time?: string | null
+          starts_on?: string
+          status?: string
+          teacher_id?: string | null
+          teacher_pay_kind?: string | null
+          teacher_pay_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          capacity?: number | null
+          course_id?: string | null
+          created_at?: string
+          days?: number[]
+          deleted_at?: string | null
+          end_time?: string | null
+          ends_on?: string | null
+          id?: string
+          is_online?: boolean
+          name?: string
+          note?: string | null
+          room_id?: string | null
+          school_id?: string
+          service_id?: string | null
+          start_time?: string | null
+          starts_on?: string
+          status?: string
+          teacher_id?: string | null
+          teacher_pay_kind?: string | null
+          teacher_pay_value?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_groups_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_groups_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_groups_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_groups_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_groups_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_groups_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -3304,8 +3926,11 @@ export type Database = {
           deleted_at: string | null
           full_name: string
           hired_on: string | null
+          hour_price: number | null
           id: string
           is_active: boolean
+          leave_reason: string | null
+          left_on: string | null
           note: string | null
           phone: string | null
           rate_factor: number
@@ -3322,8 +3947,11 @@ export type Database = {
           deleted_at?: string | null
           full_name: string
           hired_on?: string | null
+          hour_price?: number | null
           id?: string
           is_active?: boolean
+          leave_reason?: string | null
+          left_on?: string | null
           note?: string | null
           phone?: string | null
           rate_factor?: number
@@ -3340,8 +3968,11 @@ export type Database = {
           deleted_at?: string | null
           full_name?: string
           hired_on?: string | null
+          hour_price?: number | null
           id?: string
           is_active?: boolean
+          leave_reason?: string | null
+          left_on?: string | null
           note?: string | null
           phone?: string | null
           rate_factor?: number
@@ -3458,6 +4089,66 @@ export type Database = {
           },
         ]
       }
+      tuition_plans: {
+        Row: {
+          academic_year: string | null
+          branch_id: string | null
+          created_at: string
+          grade_from: number | null
+          grade_to: number | null
+          id: string
+          is_active: boolean
+          monthly_amount: number
+          name: string
+          school_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          academic_year?: string | null
+          branch_id?: string | null
+          created_at?: string
+          grade_from?: number | null
+          grade_to?: number | null
+          id?: string
+          is_active?: boolean
+          monthly_amount: number
+          name: string
+          school_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: string | null
+          branch_id?: string | null
+          created_at?: string
+          grade_from?: number | null
+          grade_to?: number | null
+          id?: string
+          is_active?: boolean
+          monthly_amount?: number
+          name?: string
+          school_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tuition_plans_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tuition_plans_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_branches: {
         Row: {
           branch_id: string
@@ -3481,6 +4172,48 @@ export type Database = {
           },
           {
             foreignKeyName: "user_branches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_permissions: {
+        Row: {
+          allowed: boolean
+          granted_at: string
+          granted_by: string | null
+          note: string | null
+          permission: string
+          user_id: string
+        }
+        Insert: {
+          allowed: boolean
+          granted_at?: string
+          granted_by?: string | null
+          note?: string | null
+          permission: string
+          user_id: string
+        }
+        Update: {
+          allowed?: boolean
+          granted_at?: string
+          granted_by?: string | null
+          note?: string | null
+          permission?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_permissions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "app_users"
@@ -3597,6 +4330,28 @@ export type Database = {
       }
     }
     Functions: {
+      activate_group_member: {
+        Args: { p_from?: string; p_member_id: string }
+        Returns: undefined
+      }
+      add_invoice_discount: {
+        Args: {
+          p_amount: number
+          p_period: string
+          p_reason: string
+          p_student_id: string
+        }
+        Returns: Json
+      }
+      add_payroll_adjustment: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_reason?: string
+          p_run_id: string
+        }
+        Returns: Json
+      }
       approve_invoices: {
         Args: { p_branch_id: string; p_period: string }
         Returns: Json
@@ -3619,10 +4374,19 @@ export type Database = {
         Args: { p_payment_id: string; p_reason: string }
         Returns: Json
       }
+      cancel_payroll: {
+        Args: { p_reason: string; p_run_id: string }
+        Returns: Json
+      }
+      cancel_session: {
+        Args: { p_reason: string; p_session_id: string }
+        Returns: undefined
+      }
       class_attendance_students: {
         Args: { p_class_id: string; p_day?: string }
         Returns: {
           full_name: string
+          is_late: boolean
           is_present: boolean
           marked_at: string
           note: string
@@ -3636,8 +4400,32 @@ export type Database = {
         Returns: Json
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      delete_calendar_day: {
+        Args: { p_branch_id?: string; p_day: string }
+        Returns: Json
+      }
+      delete_class: {
+        Args: { p_class_id: string; p_force?: boolean; p_reason: string }
+        Returns: Json
+      }
+      delete_payroll_run: {
+        Args: { p_reason?: string; p_run_id: string }
+        Returns: Json
+      }
+      delete_student: {
+        Args: { p_force?: boolean; p_reason: string; p_student_id: string }
+        Returns: Json
+      }
+      delete_teacher: {
+        Args: { p_force?: boolean; p_reason: string; p_teacher_id: string }
+        Returns: Json
+      }
       detach_parent: {
         Args: { p_parent_id: string; p_student_id: string }
+        Returns: Json
+      }
+      dismiss_teacher: {
+        Args: { p_left_on?: string; p_reason: string; p_teacher_id: string }
         Returns: Json
       }
       edit_payment: {
@@ -3651,13 +4439,55 @@ export type Database = {
         Returns: Json
       }
       end_impersonation: { Args: { p_session_id: string }; Returns: Json }
+      enroll_to_group: {
+        Args: {
+          p_from?: string
+          p_group_id: string
+          p_note?: string
+          p_student_id: string
+          p_trial?: boolean
+        }
+        Returns: string
+      }
       finalize_invoices: {
         Args: { p_branch_id: string; p_period: string }
         Returns: Json
       }
+      freeze_group_member: {
+        Args: {
+          p_from: string
+          p_member_id: string
+          p_reason?: string
+          p_to: string
+        }
+        Returns: string
+      }
+      generate_group_sessions: {
+        Args: { p_from: string; p_group_id: string; p_to: string }
+        Returns: number
+      }
       generate_invoices: {
         Args: { p_branch_id: string; p_period: string }
         Returns: Json
+      }
+      group_conflicts: {
+        Args: {
+          p_branch_id: string
+          p_days: number[]
+          p_end: string
+          p_except_id?: string
+          p_room_id: string
+          p_start: string
+          p_teacher_id: string
+        }
+        Returns: {
+          days: number[]
+          end_time: string
+          group_id: string
+          group_name: string
+          kind: string
+          start_time: string
+        }[]
       }
       import_bank_rows: {
         Args: { p_rows: Json; p_statement_id: string }
@@ -3666,6 +4496,11 @@ export type Database = {
       issue_subscription_invoice: {
         Args: { p_period?: string; p_school_id: string }
         Returns: Json
+      }
+      lc_overview: { Args: { p_day?: string }; Returns: Json }
+      leave_group: {
+        Args: { p_member_id: string; p_on?: string; p_reason?: string }
+        Returns: undefined
       }
       lock_period: {
         Args: { p_branch_id?: string; p_note?: string; p_period: string }
@@ -3685,6 +4520,15 @@ export type Database = {
         Args: { p_absent?: Json; p_class_id: string; p_day: string }
         Returns: Json
       }
+      mark_session_attendance: {
+        Args: {
+          p_homework?: string
+          p_records: Json
+          p_session_id: string
+          p_topic?: string
+        }
+        Returns: Json
+      }
       mark_support_read: { Args: { p_thread_id: string }; Returns: Json }
       match_statement_row: {
         Args: { p_row_id: string; p_student_id: string }
@@ -3698,8 +4542,25 @@ export type Database = {
           branch_id: string
           class_id: string
           class_name: string
+          day_name: string
           is_workday: boolean
           marked_at: string
+          students: number
+        }[]
+      }
+      my_group_sessions: {
+        Args: { p_day?: string }
+        Returns: {
+          course_name: string
+          day: string
+          end_time: string
+          group_id: string
+          group_name: string
+          marked: number
+          room_name: string
+          session_id: string
+          start_time: string
+          status: string
           students: number
         }[]
       }
@@ -3734,6 +4595,10 @@ export type Database = {
           class_name: string
           day: string
         }[]
+      }
+      period_forecast: {
+        Args: { p_branch_id: string; p_period: string }
+        Returns: Json
       }
       platform_overview: {
         Args: never
@@ -3805,6 +4670,10 @@ export type Database = {
         Args: { p_body: string; p_file_path?: string; p_thread_id: string }
         Returns: Json
       }
+      prepay_quote: {
+        Args: { p_from?: string; p_months?: number; p_student_id: string }
+        Returns: Json
+      }
       promote_classes: {
         Args: {
           p_branch_id?: string
@@ -3845,10 +4714,25 @@ export type Database = {
         }
         Returns: Json
       }
+      register_split_payment: {
+        Args: {
+          p_note?: string
+          p_paid_on?: string
+          p_parts: Json
+          p_student_id: string
+        }
+        Returns: Json
+      }
       reject_payment_proof: {
         Args: { p_proof_id: string; p_reason: string }
         Returns: Json
       }
+      remove_absences: { Args: { p_ids: string[] }; Returns: Json }
+      remove_invoice_discount: {
+        Args: { p_line_id: string; p_reason?: string }
+        Returns: Json
+      }
+      remove_payroll_adjustment: { Args: { p_line_id: string }; Returns: Json }
       report_advances: {
         Args: { p_branch_id?: string }
         Returns: {
@@ -3868,6 +4752,7 @@ export type Database = {
           class_id: string
           class_name: string
           grade_level: number
+          late: number
           marked_at: string
           present: number
           teacher_name: string
@@ -3885,11 +4770,13 @@ export type Database = {
           class_name: string
           collected: number
           collection_rate: number
-          debt: number
+          debtors: number
           grade_level: number
+          overdue: number
           remaining: number
           students: number
           teacher_name: string
+          unpaid: number
         }[]
       }
       report_cash: {
@@ -3982,6 +4869,20 @@ export type Database = {
           students: number
           total_debt: number
           total_expenses: number
+        }[]
+      }
+      report_group_earnings: {
+        Args: { p_period: string }
+        Returns: {
+          amount: number
+          detail: Json
+          group_id: string
+          group_name: string
+          pay_kind: string
+          quantity: number
+          teacher_id: string
+          teacher_name: string
+          unit_price: number
         }[]
       }
       report_invoice_status: {
@@ -4098,7 +4999,23 @@ export type Database = {
         Returns: Json
       }
       run_billing_cycle: { Args: never; Returns: Json }
+      run_monthly_invoices: {
+        Args: { p_dry_run?: boolean; p_period?: string }
+        Returns: Json
+      }
+      run_monthly_payroll: {
+        Args: { p_dry_run?: boolean; p_period?: string }
+        Returns: Json
+      }
       school_price: { Args: { p_school_id: string }; Returns: Json }
+      school_setup_issues: {
+        Args: { p_branch_id?: string }
+        Returns: {
+          code: string
+          count: number
+          severity: string
+        }[]
+      }
       school_users: {
         Args: { p_school_id: string }
         Returns: {
@@ -4114,6 +5031,27 @@ export type Database = {
       seed_school_defaults: { Args: { p_school_id: string }; Returns: Json }
       send_attendance_notices: { Args: never; Returns: Json }
       send_due_reminders: { Args: never; Returns: Json }
+      session_roster: {
+        Args: { p_session_id: string }
+        Returns: {
+          balance: number
+          comment: string
+          full_name: string
+          grade: number
+          member_status: string
+          status: string
+          student_id: string
+        }[]
+      }
+      set_billing_model: {
+        Args: { p_model: string; p_school_id: string }
+        Returns: Json
+      }
+      set_group_price: {
+        Args: { p_group_id: string; p_price: number; p_valid_from?: string }
+        Returns: Json
+      }
+      set_org_type: { Args: { p_type: string }; Returns: string }
       set_platform_setting: {
         Args: { p_key: string; p_reason?: string; p_value: Json }
         Returns: Json
@@ -4136,6 +5074,38 @@ export type Database = {
           p_thread_id: string
         }
         Returns: Json
+      }
+      set_teacher_branches: {
+        Args: {
+          p_branch_ids: string[]
+          p_shares?: number[]
+          p_teacher_id: string
+        }
+        Returns: Json
+      }
+      set_user_branches: {
+        Args: { p_branch_ids: string[]; p_user_id: string }
+        Returns: Json
+      }
+      set_user_permission: {
+        Args: {
+          p_allowed?: boolean
+          p_note?: string
+          p_permission: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      stale_invoices: {
+        Args: { p_branch_id: string; p_period: string }
+        Returns: {
+          charged: number
+          class_name: string
+          expected: number
+          invoice_id: string
+          student_id: string
+          student_name: string
+        }[]
       }
       start_impersonation: {
         Args: {
@@ -4180,6 +5150,29 @@ export type Database = {
         }
         Returns: Json
       }
+      today_activity: {
+        Args: { p_branch_id?: string; p_day?: string; p_limit?: number }
+        Returns: {
+          act: string
+          actor: string
+          amount: number
+          happened_at: string
+          href: string
+          kind: string
+          n: number
+          obj: string
+          subject: string
+          support: boolean
+        }[]
+      }
+      transfer_group_member: {
+        Args: { p_member_id: string; p_on?: string; p_to_group_id: string }
+        Returns: string
+      }
+      unlock_period: {
+        Args: { p_branch_id?: string; p_period: string; p_reason?: string }
+        Returns: Json
+      }
       update_school_profile: {
         Args: {
           p_address?: string
@@ -4193,6 +5186,19 @@ export type Database = {
           p_tax_id?: string
           p_timezone?: string
         }
+        Returns: Json
+      }
+      user_permission_matrix: {
+        Args: { p_user_id: string }
+        Returns: {
+          effective: boolean
+          from_role: boolean
+          override: boolean
+          permission: string
+        }[]
+      }
+      write_off_before: {
+        Args: { p_reason: string; p_start: string }
         Returns: Json
       }
     }
@@ -4248,12 +5254,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4277,11 +5283,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4302,11 +5308,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4327,11 +5333,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4344,11 +5350,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

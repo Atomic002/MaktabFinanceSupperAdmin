@@ -132,6 +132,19 @@ export default function SchoolCard() {
   };
 
   // --- Hisob-faktura chiqarish ------------------------------------
+  //  To'lov turi: oylik obuna yoki sotib olish (+ yillik server).
+  const model = useMutation({
+    mutationFn: async (m: 'subscription' | 'purchase') => {
+      const { error } = await supabase.rpc('set_billing_model', { p_school_id: id!, p_model: m });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.ok(t('ux.saved'));
+      qc.invalidateQueries({ queryKey: ['school-subscription', id] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
   const issue = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.rpc('issue_subscription_invoice', {
@@ -266,6 +279,17 @@ export default function SchoolCard() {
       {/* --- Obuna va narx tarkibi -------------------------------- */}
       <div className="mt-3 grid gap-3 lg:grid-cols-2">
         <Card title={t('school.subscription')}>
+          <Row label={t('billing.model')}>
+            <select
+              value={(sub as unknown as { billing_model?: string } | null)?.billing_model ?? 'subscription'}
+              disabled={!sub || model.isPending}
+              onChange={(e) => model.mutate(e.target.value as 'subscription' | 'purchase')}
+              className="h-8 rounded-lg border bg-[var(--bg)] px-2 text-[13px]"
+            >
+              <option value="subscription">{t('billing.model.subscription')}</option>
+              <option value="purchase">{t('billing.model.purchase')}</option>
+            </select>
+          </Row>
           <Row label={t('schools.plan')}>
             {(sub?.plans as unknown as { name: string } | null)?.name ?? '—'}
           </Row>
