@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
 // =====================================================================
@@ -10,17 +11,45 @@ import { fileURLToPath, URL } from 'node:url';
 //  tushmasligi kerak. Bitta ilovada rol bo'yicha yashirish yetarli
 //  emas — kod baribir brauzerga yuklanadi va uni o'qish mumkin.
 //
-//  PWA YO'Q: bu ilova 2-5 kishilik jamoa uchun, ish stolida ochiladi.
-//  Offline ishlash ham, ekranga o'rnatish ham kerak emas. Service
-//  worker esa yangilanishni kechiktiradi — platformani boshqaruvchi
-//  panel har doim eng oxirgi versiyada bo'lishi kerak.
+//  PWA: ilovani kompyuter yoki telefonga O'RNATISH mumkin (alohida
+//  oyna, belgisi bilan). Yangilanish kechikmasin: yangi versiya
+//  chiqqanda o'zi yangilanadi (main.tsx), keshda API so'rovlari yo'q.
 // =====================================================================
 
 const BASE = process.env.PANEL_BASE || '/';
 
 export default defineConfig({
   base: BASE,
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      injectRegister: false,
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'logo-mark.svg'],
+      workbox: {
+        navigateFallbackDenylist: [/^\/rest\//, /^\/auth\//, /^\/storage\//, /^\/functions\//],
+        runtimeCaching: [],
+      },
+      manifest: {
+        id: 'uztomic-edu-admin',
+        name: 'Uztomic Edu — Platforma',
+        short_name: 'Edu Admin',
+        description: 'Uztomic Edu platforma boshqaruvi',
+        lang: 'uz',
+        theme_color: '#0B0D11',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: BASE,
+        scope: BASE,
+        icons: [
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+    }),
+  ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
